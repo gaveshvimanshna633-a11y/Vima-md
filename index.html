@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIMA PAIRING BOT</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #bc13fe;
+            --secondary-color: #7a10a8;
+            --bg-dark: #0a0a0c;
+            --text-light: #ffffff;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: var(--text-light);
+        }
+
+        /* Animated Background Shapes */
+        .background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+
+        .shape {
+            position: absolute;
+            background: rgba(188, 19, 254, 0.1);
+            border: 1px solid rgba(188, 19, 254, 0.2);
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Main Container */
+        .container {
+            background: rgba(20, 20, 25, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(188, 19, 254, 0.3);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(188, 19, 254, 0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            z-index: 10;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+            font-size: 1.5rem;
+            text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 25px;
+        }
+
+        .instruction {
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            color: #ccc;
+        }
+
+        .input-group {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: 0.3s;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: white;
+            padding: 12px;
+            flex: 1;
+            font-size: 1rem;
+            letter-spacing: 1px;
+        }
+
+        button {
+            background: var(--primary-color);
+            border: none;
+            padding: 0 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: var(--secondary-color);
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #result {
+            margin-top: 25px;
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .code-display {
+            background: rgba(188, 19, 254, 0.2);
+            padding: 15px 30px;
+            border-radius: 10px;
+            border: 1px dashed var(--primary-color);
+            font-size: 1.4rem;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #fff;
+            margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .code-display:hover::after {
+            content: "Click to Copy";
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.6rem;
+            letter-spacing: 0;
+            color: var(--primary-color);
+        }
+
+        .loading {
+            width: 25px;
+            height: 25px;
+            border: 3px solid rgba(188, 19, 254, 0.3);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 0.7rem;
+            opacity: 0.5;
+        }
+
+        .error { color: #ff4d4d; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="background" id="bg"></div>
+
+    <div class="container">
+        <h1>VIMA PAIRING BOT</h1>
+        <div class="subtitle">PAIR YOUR BOT WITH GAVESH VIMANSHNA</div>
+        
+        <div class="instruction">PLEASE ENTER THE NUMBER<br><small>without the ( + ) mark</small></div>
+
+        <div class="input-group">
+            <input type="text" id="numberInput" placeholder="9477xxxxxxx" maxlength="15">
+            <button onclick="getPairingCode()" id="submitBtn">ENTER</button>
+        </div>
+
+        <div id="result">
+            <!-- Pairing code or loading will appear here -->
+        </div>
+
+        <footer>
+            powered by © VIMA HOSTING BOT || GAVESH VIMANSHNA 🍃
+        </footer>
+    </div>
+
+    <script>
+        // Create floating background shapes
+        function createShapes() {
+            const bg = document.getElementById('bg');
+            for (let i = 0; i < 20; i++) {
+                const shape = document.createElement('div');
+                shape.classList.add('shape');
+                const size = Math.random() * 50 + 10;
+                shape.style.width = `${size}px`;
+                shape.style.height = `${size}px`;
+                shape.style.left = `${Math.random() * 100}%`;
+                shape.style.top = `${Math.random() * 100}%`;
+                shape.style.animationDelay = `${Math.random() * 10}s`;
+                shape.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                if (Math.random() > 0.5) shape.style.borderRadius = '50%';
+                bg.appendChild(shape);
+            }
+        }
+
+        async function getPairingCode() {
+            const number = document.getElementById('numberInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('submitBtn');
+
+            if (!number) {
+                resultDiv.innerHTML = '<span class="error">Please enter a valid number!</span>';
+                return;
+            }
+
+            // UI Update: Loading
+            btn.disabled = true;
+            resultDiv.innerHTML = '<div class="loading"></div><p style="font-size: 0.8rem; margin-top:10px;">Requesting code...</p>';
+
+            try {
+                // Using the API from the screenshot
+                const response = await axios.get(`https://gheikcry-vimamd.hf.space/code?number=${number}`);
+                const code = response.data.code || "SERVICE BUSY";
+
+                resultDiv.innerHTML = `
+                    <div class="code-display" onclick="copyToClipboard('${code}')">
+                        ${code}
+                    </div>
+                    <small style="color: #00ff88;">Click the code to copy</small>
+                `;
+            } catch (err) {
+                resultDiv.innerHTML = '<span class="error">Error fetching code. Try again later.</span>';
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function copyToClipboard(text) {
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+            
+            const display = document.querySelector('.code-display');
+            const originalText = display.innerText;
+            display.innerText = "COPIED!";
+            setTimeout(() => {
+                display.innerText = originalText;
+            }, 1000);
+        }
+
+        window.onload = createShapes;
+    </script>
+</body>
+</html>
