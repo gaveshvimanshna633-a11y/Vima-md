@@ -3,283 +3,866 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIMA PAIRING BOT</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Wallpaper Story</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #bc13fe;
-            --secondary-color: #7a10a8;
-            --bg-dark: #0a0a0c;
-            --text-light: #ffffff;
-        }
-
-        body, html {
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0a0000 0%, #1a0000 25%, #2d0000 50%, #1a0000 75%, #0a0000 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Snow Effect */
+        .snow-container {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg-dark);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            pointer-events: none;
+            z-index: 1000;
             overflow: hidden;
-            color: var(--text-light);
         }
 
-        /* Animated Background Shapes */
-        .background {
+        .snowflake {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            top: -10px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1em;
+            animation: fall linear infinite;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
 
-        .shape {
-            position: absolute;
-            background: rgba(188, 19, 254, 0.1);
-            border: 1px solid rgba(188, 19, 254, 0.2);
-            animation: float 20s infinite linear;
+        @keyframes fall {
+            0% {
+                transform: translateY(-10px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0.3;
+            }
         }
 
-        @keyframes float {
-            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
-            50% { opacity: 0.5; }
-            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-        }
-
-        /* Main Container */
-        .container {
-            background: rgba(20, 20, 25, 0.8);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(188, 19, 254, 0.3);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(188, 19, 254, 0.2);
+        /* Header */
+        .header {
             text-align: center;
-            width: 90%;
-            max-width: 400px;
+            padding: 60px 20px 30px;
+            position: relative;
             z-index: 10;
         }
 
-        h1 {
-            color: var(--primary-color);
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 5px;
-            font-size: 1.5rem;
-            text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff4d4d, #cc0000, #ff6666);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+        }
+
+        .typing-container {
+            font-size: 1.2rem;
+            color: #ff9999;
+            min-height: 30px;
+            margin-bottom: 10px;
+        }
+
+        .typing-text {
+            border-right: 2px solid #ff4d4d;
+            animation: blink 0.7s infinite;
+            white-space: nowrap;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        @keyframes blink {
+            0%, 100% { border-color: transparent; }
+            50% { border-color: #ff4d4d; }
         }
 
         .subtitle {
+            color: #cc6666;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        /* Menu Button */
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #cc0000, #990000);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 15px rgba(204, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(204, 0, 0, 0.6);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 320px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a0000 0%, #0d0000 100%);
+            z-index: 1002;
+            transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 5px 0 30px rgba(0, 0, 0, 0.8);
+            overflow-y: auto;
+            border-right: 1px solid rgba(204, 0, 0, 0.2);
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            background: linear-gradient(135deg, #cc0000, #990000);
+            text-align: center;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .sidebar-content {
+            padding: 25px;
+        }
+
+        .dev-section {
+            margin-bottom: 30px;
+        }
+
+        .dev-section h3 {
+            color: #ff4d4d;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dev-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(204, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .dev-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(204, 0, 0, 0.4);
+            transform: translateX(5px);
+        }
+
+        .dev-card .name {
+            font-weight: 600;
+            color: #ffcccc;
+            font-size: 1rem;
+        }
+
+        .dev-card .role {
             font-size: 0.8rem;
-            opacity: 0.7;
+            color: #cc6666;
+            margin-top: 3px;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 12px 15px;
+            color: #ffcccc;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(204, 0, 0, 0.15);
+            border-color: rgba(204, 0, 0, 0.3);
+            color: #fff;
+        }
+
+        .sidebar-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .close-sidebar {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-sidebar:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Category Filter */
+        .filter-section {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(180deg, #0a0000 0%, transparent 100%);
+            padding: 20px 0 30px;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 12px;
+            padding: 0 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .filter-btn {
+            padding: 10px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(204, 0, 0, 0.3);
+            border-radius: 25px;
+            color: #ff9999;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: linear-gradient(135deg, #cc0000, #990000);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(204, 0, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Wallpaper Grid */
+        .wallpaper-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .wallpaper-card {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(204, 0, 0, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .wallpaper-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(204, 0, 0, 0.2);
+            border-color: rgba(204, 0, 0, 0.4);
+        }
+
+        .wallpaper-card img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .wallpaper-card:hover img {
+            transform: scale(1.1);
+        }
+
+        .wallpaper-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .wallpaper-card:hover .wallpaper-overlay {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .wallpaper-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .wallpaper-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(204, 0, 0, 0.3);
+            border-radius: 15px;
+            font-size: 0.75rem;
+            color: #ff9999;
+            margin-bottom: 10px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #cc0000, #990000);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(204, 0, 0, 0.5);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding: 40px 20px;
+            background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.8));
+            border-top: 1px solid rgba(204, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff4d4d, #cc0000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+        }
+
+        .footer-text {
+            color: #cc6666;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #ff9999;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #fff;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 25px;
         }
 
-        .instruction {
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            color: #ccc;
-        }
-
-        .input-group {
-            display: flex;
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: 0.3s;
-        }
-
-        .input-group:focus-within {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
-        }
-
-        input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: white;
-            padding: 12px;
-            flex: 1;
-            font-size: 1rem;
-            letter-spacing: 1px;
-        }
-
-        button {
-            background: var(--primary-color);
-            border: none;
-            padding: 0 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-
-        button:hover {
-            background: var(--secondary-color);
-            transform: scale(1.05);
-        }
-
-        button:active {
-            transform: scale(0.95);
-        }
-
-        #result {
-            margin-top: 25px;
-            min-height: 50px;
+            border: 1px solid rgba(204, 0, 0, 0.3);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
+            color: #ff9999;
+            text-decoration: none;
+            transition: all 0.3s ease;
         }
 
-        .code-display {
-            background: rgba(188, 19, 254, 0.2);
-            padding: 15px 30px;
-            border-radius: 10px;
-            border: 1px dashed var(--primary-color);
-            font-size: 1.4rem;
-            font-weight: bold;
-            letter-spacing: 5px;
+        .social-links a:hover {
+            background: linear-gradient(135deg, #cc0000, #990000);
             color: #fff;
-            margin-bottom: 10px;
-            cursor: pointer;
-            position: relative;
+            border-color: transparent;
+            transform: translateY(-3px);
         }
 
-        .code-display:hover::after {
-            content: "Click to Copy";
-            position: absolute;
-            bottom: -20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.6rem;
-            letter-spacing: 0;
-            color: var(--primary-color);
+        .copyright {
+            color: #663333;
+            font-size: 0.8rem;
         }
 
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+            .wallpaper-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 15px;
+                padding: 15px;
+            }
+            .sidebar {
+                width: 280px;
+                left: -280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .wallpaper-grid {
+                grid-template-columns: 1fr;
+            }
+            .logo {
+                font-size: 2rem;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #cc0000, #990000);
+            border-radius: 4px;
+        }
+
+        /* Loading Animation */
         .loading {
-            width: 25px;
-            height: 25px;
-            border: 3px solid rgba(188, 19, 254, 0.3);
-            border-top: 3px solid var(--primary-color);
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #cc6666;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(204, 0, 0, 0.2);
+            border-top-color: #cc0000;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
-
-        footer {
-            margin-top: 30px;
-            font-size: 0.7rem;
-            opacity: 0.5;
-        }
-
-        .error { color: #ff4d4d; font-size: 0.8rem; }
     </style>
 </head>
 <body>
+    <!-- Snow Effect -->
+    <div class="snow-container" id="snowContainer"></div>
 
-    <div class="background" id="bg"></div>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <div class="container">
-        <h1>VIMA PAIRING BOT</h1>
-        <div class="subtitle">PAIR YOUR BOT WITH GAVESH VIMANSHNA</div>
-        
-        <div class="instruction">PLEASE ENTER THE NUMBER<br><small>without the ( + ) mark</small></div>
-
-        <div class="input-group">
-            <input type="text" id="numberInput" placeholder="9477xxxxxxx" maxlength="15">
-            <button onclick="getPairingCode()" id="submitBtn">ENTER</button>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="close-sidebar" id="closeSidebar"><i class="fas fa-times"></i></button>
+            <h2><i class="fas fa-cog"></i> Menu</h2>
+            <p>Wallpaper Story</p>
         </div>
+        <div class="sidebar-content">
+            <div class="dev-section">
+                <h3><i class="fas fa-code"></i> Developers</h3>
+                <div class="dev-card">
+                    <div class="name"><i class="fas fa-user"></i> Gavesh Vimanshana</div>
+                    <div class="role">Lead Developer</div>
+                </div>
+                <div class="dev-card">
+                    <div class="name"><i class="fas fa-user"></i> P Kaveesha</div>
+                    <div class="role">Co-Developer</div>
+                </div>
+            </div>
 
-        <div id="result">
-            <!-- Pairing code or loading will appear here -->
+            <div class="dev-section">
+                <h3><i class="fas fa-folder-open"></i> Categories</h3>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('all'); closeSidebar(); return false;"><i class="fas fa-th-large"></i> All Wallpapers</a>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('nature'); closeSidebar(); return false;"><i class="fas fa-leaf"></i> Nature</a>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('anime'); closeSidebar(); return false;"><i class="fas fa-dragon"></i> Anime</a>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('cars'); closeSidebar(); return false;"><i class="fas fa-car"></i> Cars</a>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('abstract'); closeSidebar(); return false;"><i class="fas fa-shapes"></i> Abstract</a>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('dark'); closeSidebar(); return false;"><i class="fas fa-moon"></i> Dark</a>
+                <a href="#" class="sidebar-link" onclick="filterWallpapers('minimal'); closeSidebar(); return false;"><i class="fas fa-minus"></i> Minimal</a>
+            </div>
+
+            <div class="dev-section">
+                <h3><i class="fas fa-info-circle"></i> Legal</h3>
+                <a href="#" class="sidebar-link" onclick="showTerms(); return false;"><i class="fas fa-file-contract"></i> Terms of Service</a>
+                <a href="#" class="sidebar-link" onclick="showPrivacy(); return false;"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+            </div>
         </div>
+    </aside>
 
-        <footer>
-            powered by © VIMA HOSTING BOT || GAVESH VIMANSHNA 🍃
-        </footer>
+    <!-- Menu Button -->
+    <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+
+    <!-- Header -->
+    <header class="header">
+        <h1 class="logo">Wallpaper Story</h1>
+        <div class="typing-container">
+            <span class="typing-text" id="typingText"></span>
+        </div>
+        <p class="subtitle">Discover stunning wallpapers for your devices</p>
+    </header>
+
+    <!-- Category Filter -->
+    <section class="filter-section">
+        <div class="filter-container">
+            <button class="filter-btn active" data-category="all">All</button>
+            <button class="filter-btn" data-category="nature">Nature</button>
+            <button class="filter-btn" data-category="anime">Anime</button>
+            <button class="filter-btn" data-category="cars">Cars</button>
+            <button class="filter-btn" data-category="abstract">Abstract</button>
+            <button class="filter-btn" data-category="dark">Dark</button>
+            <button class="filter-btn" data-category="minimal">Minimal</button>
+        </div>
+    </section>
+
+    <!-- Wallpaper Grid -->
+    <main class="wallpaper-grid" id="wallpaperGrid">
+        <!-- Wallpapers will be loaded by JavaScript -->
+    </main>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading more wallpapers...</p>
     </div>
 
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">Wallpaper Story</div>
+            <p class="footer-text">
+                Your ultimate destination for stunning wallpapers. 
+                We curate the best collection of high-quality wallpapers 
+                for your desktop and mobile devices.
+            </p>
+            <div class="footer-links">
+                <a href="#" onclick="showTerms(); return false;">Terms of Service</a>
+                <a href="#" onclick="showPrivacy(); return false;">Privacy Policy</a>
+                <a href="#" onclick="showAbout(); return false;">About Us</a>
+                <a href="#" onclick="showContact(); return false;">Contact</a>
+            </div>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-facebook-f"></i></a>
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+                <a href="#"><i class="fab fa-github"></i></a>
+            </div>
+            <p class="copyright">
+                © 2026 Wallpaper Story. All rights reserved.<br>
+                Developed by Gavesh Vimanshana & P Kaveesha
+            </p>
+        </div>
+    </footer>
+
     <script>
-        // Create floating background shapes
-        function createShapes() {
-            const bg = document.getElementById('bg');
-            for (let i = 0; i < 20; i++) {
-                const shape = document.createElement('div');
-                shape.classList.add('shape');
-                const size = Math.random() * 50 + 10;
-                shape.style.width = `${size}px`;
-                shape.style.height = `${size}px`;
-                shape.style.left = `${Math.random() * 100}%`;
-                shape.style.top = `${Math.random() * 100}%`;
-                shape.style.animationDelay = `${Math.random() * 10}s`;
-                shape.style.animationDuration = `${Math.random() * 10 + 10}s`;
-                if (Math.random() > 0.5) shape.style.borderRadius = '50%';
-                bg.appendChild(shape);
-            }
-        }
+        // Wallpaper Data
+        const wallpapers = [
+            { id: 1, title: "Red Sunset", category: "nature", url: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80" },
+            { id: 2, title: "Cyber City", category: "dark", url: "https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=600&q=80" },
+            { id: 3, title: "Mountain Lake", category: "nature", url: "https://images.unsplash.com/photo-1439853949127-fa647821eba0?w=600&q=80" },
+            { id: 4, title: "Sports Car", category: "cars", url: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&q=80" },
+            { id: 5, title: "Abstract Waves", category: "abstract", url: "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=600&q=80" },
+            { id: 6, title: "Minimal Lines", category: "minimal", url: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=600&q=80" },
+            { id: 7, title: "Neon Night", category: "dark", url: "https://images.unsplash.com/photo-1515630278258-407f66498911?w=600&q=80" },
+            { id: 8, title: "Cherry Blossom", category: "anime", url: "https://images.unsplash.com/photo-1522383225653-ed111181a951?w=600&q=80" },
+            { id: 9, title: "Forest Path", category: "nature", url: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&q=80" },
+            { id: 10, title: "Supercar", category: "cars", url: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&q=80" },
+            { id: 11, title: "Geometric Art", category: "abstract", url: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=600&q=80" },
+            { id: 12, title: "White Space", category: "minimal", url: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=600&q=80" },
+            { id: 13, title: "Dark Forest", category: "dark", url: "https://images.unsplash.com/photo-1511497584788-876760111969?w=600&q=80" },
+            { id: 14, title: "Anime City", category: "anime", url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600&q=80" },
+            { id: 15, title: "Ocean Waves", category: "nature", url: "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=600&q=80" },
+            { id: 16, title: "Luxury Car", category: "cars", url: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&q=80" },
+            { id: 17, title: "Color Splash", category: "abstract", url: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=600&q=80" },
+            { id: 18, title: "Clean Desk", category: "minimal", url: "https://images.unsplash.com/photo-1495195129352-aeb325a55b65?w=600&q=80" },
+        ];
 
-        async function getPairingCode() {
-            const number = document.getElementById('numberInput').value.trim();
-            const resultDiv = document.getElementById('result');
-            const btn = document.getElementById('submitBtn');
+        // Typing Animation
+        const typingTexts = [
+            "Discover stunning wallpapers...",
+            "High quality 4K & 8K images...",
+            "Free downloads for all devices...",
+            "Your story starts here..."
+        ];
+        let textIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typingElement = document.getElementById('typingText');
 
-            if (!number) {
-                resultDiv.innerHTML = '<span class="error">Please enter a valid number!</span>';
-                return;
-            }
-
-            // UI Update: Loading
-            btn.disabled = true;
-            resultDiv.innerHTML = '<div class="loading"></div><p style="font-size: 0.8rem; margin-top:10px;">Requesting code...</p>';
-
-            try {
-                // Using the API from the screenshot
-                const response = await axios.get(`https://gheikcry-vimamd.hf.space/code?number=${number}`);
-                const code = response.data.code || "SERVICE BUSY";
-
-                resultDiv.innerHTML = `
-                    <div class="code-display" onclick="copyToClipboard('${code}')">
-                        ${code}
-                    </div>
-                    <small style="color: #00ff88;">Click the code to copy</small>
-                `;
-            } catch (err) {
-                resultDiv.innerHTML = '<span class="error">Error fetching code. Try again later.</span>';
-                console.error(err);
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function copyToClipboard(text) {
-            const tempInput = document.createElement("input");
-            tempInput.value = text;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand("copy");
-            document.body.removeChild(tempInput);
+        function typeEffect() {
+            const currentText = typingTexts[textIndex];
             
-            const display = document.querySelector('.code-display');
-            const originalText = display.innerText;
-            display.innerText = "COPIED!";
-            setTimeout(() => {
-                display.innerText = originalText;
-            }, 1000);
+            if (isDeleting) {
+                typingElement.textContent = currentText.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typingElement.textContent = currentText.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            let typeSpeed = isDeleting ? 50 : 100;
+
+            if (!isDeleting && charIndex === currentText.length) {
+                typeSpeed = 2000;
+                isDeleting = true;
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                textIndex = (textIndex + 1) % typingTexts.length;
+                typeSpeed = 500;
+            }
+
+            setTimeout(typeEffect, typeSpeed);
         }
 
-        window.onload = createShapes;
+        // Snow Effect
+        function createSnow() {
+            const container = document.getElementById('snowContainer');
+            const snowflakeCount = 50;
+
+            for (let i = 0; i < snowflakeCount; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.innerHTML = '❄';
+                snowflake.style.left = Math.random() * 100 + '%';
+                snowflake.style.animationDuration = Math.random() * 5 + 5 + 's';
+                snowflake.style.animationDelay = Math.random() * 5 + 's';
+                snowflake.style.fontSize = Math.random() * 10 + 10 + 'px';
+                snowflake.style.opacity = Math.random() * 0.6 + 0.2;
+                container.appendChild(snowflake);
+            }
+        }
+
+        // Render Wallpapers
+        function renderWallpapers(category = 'all') {
+            const grid = document.getElementById('wallpaperGrid');
+            grid.innerHTML = '';
+
+            const filtered = category === 'all' 
+                ? wallpapers 
+                : wallpapers.filter(w => w.category === category);
+
+            filtered.forEach((wallpaper, index) => {
+                const card = document.createElement('div');
+                card.className = 'wallpaper-card';
+                card.style.animationDelay = index * 0.1 + 's';
+                card.innerHTML = `
+                    <img src="${wallpaper.url}" alt="${wallpaper.title}" loading="lazy">
+                    <div class="wallpaper-overlay">
+                        <span class="wallpaper-category">${wallpaper.category}</span>
+                        <div class="wallpaper-title">${wallpaper.title}</div>
+                        <a href="${wallpaper.url}" download class="download-btn" onclick="downloadWallpaper(event, '${wallpaper.title}')">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Filter Function
+        function filterWallpapers(category) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.category === category);
+            });
+            renderWallpapers(category);
+        }
+
+        // Download Handler
+        function downloadWallpaper(e, title) {
+            e.preventDefault();
+            const btn = e.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Downloaded!';
+            btn.style.background = 'linear-gradient(135deg, #00cc66, #00994d)';
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = '';
+            }, 2000);
+
+            // Simulate download
+            const link = document.createElement('a');
+            link.href = btn.href;
+            link.download = title + '.jpg';
+            link.click();
+        }
+
+        // Sidebar Toggle
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebar');
+
+        function openSidebar() {
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        menuBtn.addEventListener('click', openSidebar);
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Filter Buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterWallpapers(btn.dataset.category);
+            });
+        });
+
+        // Alert Functions
+        function showTerms() {
+            alert('Terms of Service\\n\\n1. All wallpapers are free for personal use\\n2. Do not redistribute without permission\\n3. Respect copyright laws\\n4. Commercial use requires license');
+        }
+
+        function showPrivacy() {
+            alert('Privacy Policy\\n\\n1. We do not collect personal data\\n2. No cookies tracking\\n3. Your downloads are anonymous\\n4. We respect your privacy');
+        }
+
+        function showAbout() {
+            alert('About Wallpaper Story\\n\\nA curated collection of stunning wallpapers\\nDeveloped by Gavesh Vimanshana & P Kaveesha\\nFree for everyone to enjoy!');
+        }
+
+        function showContact() {
+            alert('Contact Us\\n\\nEmail: contact@wallpaperstory.com\\nDevelopers: Gavesh Vimanshana, P Kaveesha\\nThank you for visiting!');
+        }
+
+        // Infinite Scroll Simulation
+        let isLoading = false;
+        window.addEventListener('scroll', () => {
+            if (isLoading) return;
+            
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const threshold = document.body.offsetHeight - 300;
+            
+            if (scrollPosition >= threshold) {
+                isLoading = true;
+                document.getElementById('loading').classList.add('show');
+                
+                setTimeout(() => {
+                    document.getElementById('loading').classList.remove('show');
+                    isLoading = false;
+                }, 1500);
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            createSnow();
+            typeEffect();
+            renderWallpapers();
+        });
     </script>
 </body>
 </html>
