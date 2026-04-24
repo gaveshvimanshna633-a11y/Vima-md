@@ -1,194 +1,380 @@
 <!DOCTYPE html>
-<html lang="te">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>test Login System</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Three.js Library for 3D -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-        }
-        #canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            background: #0d1117;
-        }
-        .glass-card {
-            background: rgba(13, 17, 23, 0.7);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
-        }
-        .login-content {
-            position: relative;
-            z-index: 10;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WallpaperHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #1a1a25;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --text: #f0f0ff;
+    --muted: #6b6b8a;
+    --border: #2a2a3a;
+    --success: #4ade80;
+    --error: #f87171;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG mesh */
+  body::before {
+    content:'';
+    position:fixed; inset:0; z-index:0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(124,92,252,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(252,92,125,0.12) 0%, transparent 60%);
+    pointer-events:none;
+  }
+
+  /* NAV */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 32px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size:28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:2px;
+  }
+  .nav-actions { display:flex; gap:12px; align-items:center; }
+  .btn {
+    padding: 9px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-ghost {
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color:#fff;
+  }
+  .btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
+
+  /* PAGES */
+  .page { display:none; position:relative; z-index:1; }
+  .page.active { display:block; }
+
+  /* ===== AUTH MODAL ===== */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius:20px;
+    padding:40px;
+    width:min(420px,92vw);
+    position:relative;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(30px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .modal-close {
+    position:absolute; top:16px; right:18px;
+    background:none; border:none; color:var(--muted);
+    font-size:22px; cursor:pointer; line-height:1;
+  }
+  .modal-close:hover { color:var(--text); }
+  .modal-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:32px;
+    letter-spacing:1px;
+    margin-bottom:6px;
+  }
+  .modal-sub { color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .tabs { display:flex; gap:0; margin-bottom:28px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .tab-btn {
+    flex:1; padding:10px; background:transparent; border:none;
+    color:var(--muted); cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; transition:all 0.2s;
+  }
+  .tab-btn.active { background:var(--accent); color:#fff; }
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase; }
+  .form-group input {
+    width:100%; padding:12px 16px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:14px;
+    transition:border 0.2s; outline:none;
+  }
+  .form-group input:focus { border-color:var(--accent); }
+  .form-divider { text-align:center; color:var(--muted); font-size:12px; margin:18px 0; position:relative; }
+  .form-divider::before, .form-divider::after {
+    content:''; position:absolute; top:50%; width:42%; height:1px; background:var(--border);
+  }
+  .form-divider::before { left:0; } .form-divider::after { right:0; }
+  .google-btn {
+    width:100%; padding:12px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; display:flex; align-items:center;
+    justify-content:center; gap:10px; transition:all 0.2s;
+  }
+  .google-btn:hover { border-color:var(--accent); }
+  .google-icon { width:18px; height:18px; }
+  .error-msg { color:var(--error); font-size:12px; margin-top:8px; display:none; }
+  .error-msg.show { display:block; }
+  .success-msg { color:var(--success); font-size:12px; margin-top:8px; display:none; }
+  .success-msg.show { display:block; }
+
+  /* ===== HOME PAGE ===== */
+  .hero {
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding:100px 24px 60px;
+  }
+  .hero-badge {
+    display:inline-block; padding:6px 16px; border-radius:999px;
+    border:1px solid rgba(124,92,252,0.4);
+    background:rgba(124,92,252,0.1);
+    font-size:12px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--accent); margin-bottom:28px;
+  }
+  .hero h1 {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(56px,10vw,120px);
+    line-height:0.9; letter-spacing:2px;
+    background:linear-gradient(135deg,#fff 40%,var(--accent));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    margin-bottom:20px;
+  }
+  .hero p { color:var(--muted); font-size:16px; max-width:480px; line-height:1.7; margin-bottom:36px; }
+  .hero-btns { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+
+  /* gallery preview */
+  .gallery-strip {
+    display:flex; gap:12px; overflow:hidden;
+    padding:0 24px 60px; justify-content:center; flex-wrap:wrap;
+  }
+  .gallery-card {
+    width:160px; height:240px; border-radius:14px;
+    background:var(--card); border:1px solid var(--border);
+    overflow:hidden; position:relative; flex-shrink:0;
+    transition:transform 0.3s;
+  }
+  .gallery-card:hover { transform:translateY(-6px); }
+  .gallery-card img { width:100%; height:100%; object-fit:cover; }
+  .gallery-card .card-overlay {
+    position:absolute; inset:0;
+    background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
+    display:flex; align-items:flex-end; padding:12px;
+    opacity:0; transition:opacity 0.2s;
+  }
+  .gallery-card:hover .card-overlay { opacity:1; }
+  .card-overlay span { font-size:11px; color:#fff; }
+
+  /* ===== PROFILE PAGE ===== */
+  #profile-page {
+    padding-top:90px; min-height:100vh;
+  }
+  .profile-header {
+    background:var(--card); border-bottom:1px solid var(--border);
+    padding:40px 32px 32px;
+    display:flex; align-items:center; gap:24px;
+    flex-wrap:wrap;
+  }
+  .avatar {
+    width:80px; height:80px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue',sans-serif; font-size:32px; color:#fff;
+    flex-shrink:0;
+  }
+  .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  .profile-info h2 { font-size:22px; font-weight:500; margin-bottom:4px; }
+  .profile-info p { color:var(--muted); font-size:13px; }
+  .profile-stats { margin-left:auto; display:flex; gap:32px; }
+  .stat { text-align:center; }
+  .stat-num { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); }
+  .stat-label { font-size:11px; color:var(--muted); letter-spacing:0.5px; }
+  .profile-body { padding:32px; }
+  .section-title {
+    font-family:'Bebas Neue',sans-serif; font-size:22px;
+    letter-spacing:1px; margin-bottom:20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+  .user-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .user-wp-card {
+    aspect-ratio:9/16; border-radius:12px;
+    background:var(--card); border:1px solid var(--border);
+    overflow:hidden; cursor:pointer; transition:transform 0.2s;
+    position:relative;
+  }
+  .user-wp-card:hover { transform:scale(1.03); }
+  .placeholder-wp {
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; opacity:0.3;
+  }
+  .logout-btn {
+    position:fixed; bottom:24px; right:24px;
+    background:var(--card); border:1px solid var(--error);
+    color:var(--error); padding:10px 20px; border-radius:10px;
+    cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px;
+    transition:all 0.2s; z-index:50;
+  }
+  .logout-btn:hover { background:var(--error); color:#fff; }
+
+  /* Loading spinner */
+  .spinner {
+    width:20px; height:20px; border:2px solid rgba(255,255,255,0.2);
+    border-top-color:#fff; border-radius:50%;
+    animation:spin 0.7s linear infinite; display:inline-block;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
 </head>
-<body class="text-gray-200">
+<body>
 
-    <!-- 3D Animation Background Container -->
-    <div id="canvas-container"></div>
+<!-- NAV -->
+<nav>
+  <div class="logo">WallHub</div>
+  <div class="nav-actions" id="nav-actions">
+    <button class="btn btn-ghost" onclick="openModal('login')">Login</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Sign Up</button>
+  </div>
+</nav>
 
-    <!-- Loading View -->
-    <div id="loading-view" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0d1117]">
-        <div class="w-12 h-12 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Welcome Back</div>
+    <div class="modal-sub" id="modal-sub">Sign in to your account</div>
+
+    <div class="tabs">
+      <button class="tab-btn" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Register</button>
     </div>
 
-    <!-- Login View -->
-    <div id="login-view" class="hidden relative h-screen flex items-center justify-center px-4 login-content">
-        <div class="max-w-md w-full p-12 glass-card rounded-[2rem] text-center transform transition-all duration-700">
-            <div class="mb-10">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-indigo-500/10 mb-8 border border-indigo-500/20">
-                    <i class="fas fa-rocket text-4xl text-indigo-400"></i>
-                </div>
-                <h1 class="text-4xl font-bold mb-3 tracking-tight text-white">TEST LOGIN SYSTEM</h1>
-                <p class="text-slate-400 text-sm leading-relaxed px-4">TEST account access login .</p>
-            </div>
-            
-            <div class="space-y-4 px-2">
-                <!-- Google Login Button -->
-                <button id="google-login-btn" class="w-full group flex items-center justify-center gap-4 px-6 py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-100 transition-all duration-300 transform hover:-translate-y-1 active:scale-95 shadow-lg">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="w-6 h-6">
-                    Google Login
-                </button>
+    <!-- Google -->
+    <button class="google-btn" onclick="googleSignIn()">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
 
-                <!-- GitHub Login Button -->
-                <button id="github-login-btn" class="w-full group flex items-center justify-center gap-4 px-6 py-4 bg-[#24292f] text-white font-bold rounded-2xl hover:bg-[#1a1f24] transition-all duration-300 transform hover:-translate-y-1 active:scale-95 shadow-lg border border-white/5">
-                    <i class="fab fa-github text-2xl"></i>
-                    GitHub Login
-                </button>
-            </div>
-            
-            <p id="error-msg" class="text-red-400 mt-6 text-xs hidden bg-red-500/10 p-3 rounded-xl border border-red-500/20"></p>
-            
-            <div class="mt-14 pt-8 border-t border-white/5 text-[10px] text-slate-500 uppercase tracking-[0.2em] font-medium">
-                CHAMINDU AUTHENTICATION
-            </div>
-        </div>
+    <div class="form-divider">or</div>
+
+    <!-- Email/Pass form -->
+    <div id="auth-form">
+      <div class="form-group" id="name-group" style="display:none">
+        <label>Full Name</label>
+        <input type="text" id="inp-name" placeholder="John Doe" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="inp-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="inp-pass" placeholder="••••••••" />
+      </div>
+      <div class="error-msg" id="auth-error"></div>
+      <div class="success-msg" id="auth-success"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:13px" id="submit-btn" onclick="handleSubmit()">
+        <span id="submit-text">Sign In</span>
+      </button>
     </div>
+  </div>
+</div>
 
-    <!-- Dashboard View -->
-    <div id="dashboard-view" class="hidden relative h-screen overflow-hidden flex flex-col login-content">
-        <div class="p-4 md:p-8 max-w-7xl mx-auto w-full flex-1">
-            <div class="glass-card rounded-[2rem] p-8 mb-8 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="text-center md:text-left">
-                    <h3 class="text-3xl font-bold text-white mb-1">Dashboard</h3>
-                    <p class="text-slate-400">test login system, <span id="user-display-name" class="text-indigo-400 font-bold"></span>!</p>
-                </div>
-                <div class="flex items-center gap-4 bg-black/30 p-2 pr-8 rounded-full border border-white/5">
-                    <img id="user-photo" src="" alt="Profile" class="w-12 h-12 rounded-full border-2 border-indigo-500/30">
-                    <div>
-                        <p id="user-name" class="text-sm font-bold text-white leading-none mb-1">Peru</p>
-                        <p id="user-email" class="text-xs text-slate-500 leading-none">Email</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="glass-card p-8 rounded-[2rem] group hover:border-indigo-500/50 transition-all">
-                    <div class="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-6 border border-green-500/20">
-                        <i class="fas fa-users text-green-400"></i>
-                    </div>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Total Users</p>
-                    <h4 class="text-3xl font-bold text-white">1,284</h4>
-                </div>
-                <div class="glass-card p-8 rounded-[2rem] group hover:border-indigo-500/50 transition-all">
-                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-6 border border-indigo-500/20">
-                        <i class="fas fa-bolt text-indigo-400"></i>
-                    </div>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Session Info</p>
-                    <h4 class="text-3xl font-bold text-white" id="login-method">Google</h4>
-                </div>
-                <div class="glass-card p-8 rounded-[2rem] group hover:border-indigo-500/50 transition-all">
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 border border-purple-500/20">
-                        <i class="fas fa-clock text-purple-400"></i>
-                    </div>
-                    <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Active Status</p>
-                    <h4 class="text-3xl font-bold text-white">Online</h4>
-                </div>
-            </div>
-
-            <button id="logout-btn" class="px-8 py-4 bg-red-500/10 text-red-400 rounded-2xl hover:bg-red-500 hover:text-white transition-all font-bold flex items-center gap-3">
-                <i class="fas fa-power-off"></i> Logout
-            </button>
-        </div>
+<!-- HOME PAGE -->
+<div class="page active" id="home-page">
+  <div class="hero">
+    <div class="hero-badge">✦ Free Wallpapers</div>
+    <h1>WALL<br>HUB</h1>
+    <p>Discover thousands of stunning wallpapers. Curated for every screen, every mood.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" onclick="openModal('register')">Get Started Free</button>
+      <button class="btn btn-ghost" onclick="openModal('login')">Sign In</button>
     </div>
+  </div>
+  <div class="gallery-strip">
+    <div class="gallery-card" style="background:linear-gradient(135deg,#667eea,#764ba2)"><div class="card-overlay"><span>Abstract</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#f093fb,#f5576c)"><div class="card-overlay"><span>Neon</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><div class="card-overlay"><span>Ocean</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"><div class="card-overlay"><span>Nature</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#fa709a,#fee140)"><div class="card-overlay"><span>Sunset</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)"><div class="card-overlay"><span>Galaxy</span></div></div>
+  </div>
+</div>
 
-    <script type="module">
-        let scene, camera, renderer, stars, starGeo;
-        
-        function init3D() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-            camera.position.z = 1;
-            camera.rotation.x = Math.PI/2;
+<!-- PROFILE PAGE -->
+<div class="page" id="profile-page">
+  <div class="profile-header">
+    <div class="avatar" id="user-avatar">U</div>
+    <div class="profile-info">
+      <h2 id="user-displayname">User Name</h2>
+      <p id="user-email-display">user@email.com</p>
+      <p style="font-size:12px;color:var(--accent);margin-top:4px" id="user-joined"></p>
+    </div>
+    <div class="profile-stats">
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Uploads</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Saved</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Likes</div></div>
+    </div>
+  </div>
+  <div class="profile-body">
+    <div class="section-title">My Wallpapers</div>
+    <div class="user-gallery" id="user-gallery">
+      <div class="user-wp-card" style="border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer">
+        <span style="font-size:28px;opacity:0.4">+</span>
+        <span style="font-size:11px;color:var(--muted)">Upload</span>
+      </div>
+    </div>
+  </div>
+  <button class="logout-btn" onclick="signOut()">Sign Out</button>
+</div>
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
+  onAuthStateChanged, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-            starGeo = new THREE.BufferGeometry();
-            let positions = [];
-            for(let i=0; i<8000; i++) {
-                let star = new THREE.Vector3(Math.random() * 600 - 300, Math.random() * 600 - 300, Math.random() * 600 - 300);
-                positions.push(star.x, star.y, star.z);
-            }
-            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-
-            let sprite = new THREE.TextureLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/sprites/circle.png');
-            let starMaterial = new THREE.PointsMaterial({ color: 0x4f46e5, size: 0.5, map: sprite, transparent: true, opacity: 0.8 });
-            stars = new THREE.Points(starGeo, starMaterial);
-            scene.add(stars);
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-            
-            document.addEventListener('mousemove', (e) => {
-                stars.rotation.y = (e.clientX / window.innerWidth - 0.5) * 0.2;
-                stars.rotation.x = (e.clientY / window.innerHeight - 0.5) * 0.2;
-            });
-
-            function animate() {
-                const pos = starGeo.attributes.position.array;
-                for(let i=1; i<pos.length; i+=3) {
-                    pos[i] -= 0.05;
-                    if (pos[i] < -200) pos[i] = 200;
-                }
-                starGeo.attributes.position.needsUpdate = true;
-                stars.rotation.y += 0.0005;
-                renderer.render(scene, camera);
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        window.onload = init3D;
-
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, GithubAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";  
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBI-A1vwTeYaD-z6CeYAQ2IdQ3m_GXyA8M",
   authDomain: "wallpaper-8f90c.firebaseapp.com",
@@ -199,55 +385,157 @@ const firebaseConfig = {
   measurementId: "G-0PEF2WCBJE"
 };
 
-        let finalConfig = firebaseConfig;
-        if (typeof __firebase_config !== 'undefined') finalConfig = JSON.parse(__firebase_config);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-        const app = initializeApp(finalConfig);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-        const githubProvider = new GithubAuthProvider();
+// Expose to window
+window._auth = auth;
+window._provider = provider;
+window._fbFns = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, fbSignOut, updateProfile };
 
-        const loadingView = document.getElementById('loading-view');
-        const loginView = document.getElementById('login-view');
-        const dashboardView = document.getElementById('dashboard-view');
-        const errorMsg = document.getElementById('error-msg');
-        
-        onAuthStateChanged(auth, (user) => {
-            loadingView.classList.add('hidden');
-            if (user) {
-                const name = user.displayName || user.email.split('@')[0];
-                document.getElementById('user-name').textContent = name;
-                document.getElementById('user-display-name').textContent = name.split(' ')[0];
-                document.getElementById('user-email').textContent = user.email;
-                document.getElementById('user-photo').src = user.photoURL || 'https://ui-avatars.com/api/?background=4f46e5&color=fff&name=' + name;
-                
-                // Show provider
-                const providerId = user.providerData[0]?.providerId;
-                document.getElementById('login-method').textContent = providerId === 'google.com' ? 'Google' : 'GitHub';
+// Auth state
+onAuthStateChanged(auth, (user) => {
+  if (user) showProfile(user);
+  else showHome();
+});
 
-                loginView.classList.add('hidden');
-                dashboardView.classList.remove('hidden');
-            } else {
-                loginView.classList.remove('hidden');
-                dashboardView.classList.add('hidden');
-            }
-        });
+function showProfile(user) {
+  document.getElementById('home-page').classList.remove('active');
+  document.getElementById('profile-page').classList.add('active');
+  closeModal();
 
-        async function handleLogin(provider) {
-            errorMsg.classList.add('hidden');
-            try {
-                await signInWithPopup(auth, provider);
-            } catch (error) {
-                errorMsg.textContent = error.code === 'auth/account-exists-with-different-credential' 
-                    ? "Ee email tho vere login method munde undi." 
-                    : error.message;
-                errorMsg.classList.remove('hidden');
-            }
-        }
+  const name = user.displayName || user.email.split('@')[0];
+  document.getElementById('user-displayname').textContent = name;
+  document.getElementById('user-email-display').textContent = user.email;
+  document.getElementById('user-joined').textContent = '✦ Member since ' + new Date(user.metadata.creationTime).toLocaleDateString('en-US',{year:'numeric',month:'long'});
+  
+  const av = document.getElementById('user-avatar');
+  if (user.photoURL) {
+    av.innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
+  } else {
+    av.textContent = name[0].toUpperCase();
+  }
 
-        document.getElementById('google-login-btn').addEventListener('click', () => handleLogin(googleProvider));
-        document.getElementById('github-login-btn').addEventListener('click', () => handleLogin(githubProvider));
-        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
-    </script>
+  // Nav
+  document.getElementById('nav-actions').innerHTML = `
+    <span style="font-size:13px;color:var(--muted)">Hi, ${name.split(' ')[0]}</span>
+    <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
+  `;
+}
+
+function showHome() {
+  document.getElementById('home-page').classList.add('active');
+  document.getElementById('profile-page').classList.remove('active');
+  document.getElementById('nav-actions').innerHTML = `
+    <button class="btn btn-ghost" onclick="openModal('login')">Login</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Sign Up</button>
+  `;
+}
+
+window.showProfile = showProfile;
+window.showHome = showHome;
+</script>
+
+<script>
+let currentTab = 'login';
+
+function openModal(tab) {
+  document.getElementById('auth-modal').classList.add('open');
+  switchTab(tab);
+}
+function closeModal() {
+  document.getElementById('auth-modal').classList.remove('open');
+  clearMessages();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+  document.getElementById('name-group').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('modal-title').textContent = tab==='login' ? 'Welcome Back' : 'Create Account';
+  document.getElementById('modal-sub').textContent = tab==='login' ? 'Sign in to your account' : 'Join WallHub today — it\'s free';
+  document.getElementById('submit-text').textContent = tab==='login' ? 'Sign In' : 'Create Account';
+  clearMessages();
+}
+
+function clearMessages() {
+  const e = document.getElementById('auth-error');
+  const s = document.getElementById('auth-success');
+  e.classList.remove('show'); e.textContent='';
+  s.classList.remove('show'); s.textContent='';
+}
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.add('show');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.classList.add('show');
+}
+
+function setLoading(yes) {
+  const btn = document.getElementById('submit-btn');
+  const txt = document.getElementById('submit-text');
+  if(yes) { txt.innerHTML='<span class="spinner"></span>'; btn.disabled=true; }
+  else { txt.textContent = currentTab==='login'?'Sign In':'Create Account'; btn.disabled=false; }
+}
+
+async function handleSubmit() {
+  clearMessages();
+  const email = document.getElementById('inp-email').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+  const name = document.getElementById('inp-name').value.trim();
+  if(!email||!pass){ showError('Please fill in all fields.'); return; }
+  setLoading(true);
+  try {
+    const fns = window._fbFns;
+    const auth = window._auth;
+    if(currentTab==='login') {
+      await fns.signInWithEmailAndPassword(auth, email, pass);
+    } else {
+      if(!name){ showError('Please enter your name.'); setLoading(false); return; }
+      const cred = await fns.createUserWithEmailAndPassword(auth, email, pass);
+      await fns.updateProfile(cred.user, { displayName: name });
+      showSuccess('Account created! Welcome to WallHub 🎉');
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':'No account found. Please register.',
+      'auth/wrong-password':'Incorrect password. Try again.',
+      'auth/email-already-in-use':'Email already registered. Please login.',
+      'auth/weak-password':'Password must be at least 6 characters.',
+      'auth/invalid-email':'Please enter a valid email.',
+      'auth/invalid-credential':'Invalid email or password.'
+    };
+    showError(msgs[e.code] || e.message);
+  }
+  setLoading(false);
+}
+
+async function googleSignIn() {
+  try {
+    await window._fbFns.signInWithPopup(window._auth, window._provider);
+  } catch(e) {
+    showError('Google sign-in failed. Try again.');
+  }
+}
+
+async function signOut() {
+  await window._fbFns.fbSignOut(window._auth);
+}
+
+// Close modal on overlay click
+document.getElementById('auth-modal').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+
+// Expose
+window.openModal=openModal; window.closeModal=closeModal;
+window.switchTab=switchTab; window.handleSubmit=handleSubmit;
+window.googleSignIn=googleSignIn; window.signOut=signOut;
+</script>
 </body>
 </html>
