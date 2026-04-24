@@ -1,116 +1,380 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallpaper Story - Cloud Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WallpaperHub</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #1a1a25;
+    --accent: #7c5cfc;
+    --accent2: #fc5c7d;
+    --text: #f0f0ff;
+    --muted: #6b6b8a;
+    --border: #2a2a3a;
+    --success: #4ade80;
+    --error: #f87171;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; background: #050505; min-height: 100vh; color: #fff; overflow-x: hidden; }
+  /* BG mesh */
+  body::before {
+    content:'';
+    position:fixed; inset:0; z-index:0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 20%, rgba(124,92,252,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(252,92,125,0.12) 0%, transparent 60%);
+    pointer-events:none;
+  }
 
-        /* ===== ANIMATED BG ORBS ===== */
-        .bg-animation { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; overflow:hidden; }
-        .bg-orb { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.06; animation:orbFloat 12s ease-in-out infinite; }
-        .bg-orb:nth-child(1){width:500px;height:500px;background:#cc0000;top:-150px;left:-150px;animation-delay:0s;}
-        .bg-orb:nth-child(2){width:400px;height:400px;background:#880000;bottom:-100px;right:-100px;animation-delay:-4s;}
-        .bg-orb:nth-child(3){width:300px;height:300px;background:#ff4d4d;top:40%;left:50%;animation-delay:-8s;}
-        @keyframes orbFloat { 0%,100%{transform:translate(0,0) scale(1);} 33%{transform:translate(30px,-30px) scale(1.05);} 66%{transform:translate(-20px,20px) scale(0.97);} }
+  /* NAV */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 32px;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size:28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:2px;
+  }
+  .nav-actions { display:flex; gap:12px; align-items:center; }
+  .btn {
+    padding: 9px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-ghost {
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color:#fff;
+  }
+  .btn-primary:hover { opacity:0.88; transform:translateY(-1px); }
 
-        /* ===== PARTICLES & SNOW ===== */
-        .particles-container, .snow-container { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; overflow:hidden; }
-        .particle { position:absolute; border-radius:50%; background:radial-gradient(circle, rgba(255,77,77,0.5), transparent); animation:particleDrift linear infinite; }
-        .snowflake { position:absolute; top:-10px; color:rgba(255,255,255,0.5); animation:fall linear infinite; }
-        @keyframes particleDrift { 0%{transform:translateY(100vh) translateX(0) scale(0);opacity:0;} 10%{opacity:1;} 90%{opacity:0.4;} 100%{transform:translateY(-10vh) translateX(var(--drift)) scale(1);opacity:0;} }
-        @keyframes fall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1;} 100%{transform:translateY(100vh) rotate(360deg);opacity:0.1;} }
+  /* PAGES */
+  .page { display:none; position:relative; z-index:1; }
+  .page.active { display:block; }
 
-        /* ===== SIDEBAR & USER UI ===== */
-        .sidebar { position:fixed; top:0; left:-350px; width:350px; height:100vh; background:linear-gradient(180deg,#1a0000 0%,#0d0000 100%); z-index:1002; transition:left 0.4s cubic-bezier(0.4,0,0.2,1); box-shadow:5px 0 30px rgba(0,0,0,0.8); overflow-y:auto; border-right:1px solid rgba(204,0,0,0.2); }
-        .sidebar.active { left:0; }
-        .sidebar-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1001; opacity:0; visibility:hidden; transition:0.3s; }
-        .sidebar-overlay.active { opacity:1; visibility:visible; }
-        
-        .user-section { padding: 30px 25px; text-align: center; background: rgba(204,0,0,0.05); border-bottom: 1px solid rgba(204,0,0,0.1); }
-        .user-img { width: 80px; height: 80px; border-radius: 50%; border: 3px solid #cc0000; margin-bottom: 12px; object-fit: cover; box-shadow: 0 0 15px rgba(204,0,0,0.3); }
-        .user-no-img { font-size: 3.5rem; color: #333; margin-bottom: 12px; }
-        .user-name { font-weight: 700; color: #fff; font-size: 1.1rem; }
-        .user-email { font-size: 0.8rem; color: #cc6666; margin-bottom: 15px; }
+  /* ===== AUTH MODAL ===== */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,0.7); backdrop-filter:blur(8px);
+    align-items:center; justify-content:center;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius:20px;
+    padding:40px;
+    width:min(420px,92vw);
+    position:relative;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(30px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .modal-close {
+    position:absolute; top:16px; right:18px;
+    background:none; border:none; color:var(--muted);
+    font-size:22px; cursor:pointer; line-height:1;
+  }
+  .modal-close:hover { color:var(--text); }
+  .modal-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:32px;
+    letter-spacing:1px;
+    margin-bottom:6px;
+  }
+  .modal-sub { color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .tabs { display:flex; gap:0; margin-bottom:28px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  .tab-btn {
+    flex:1; padding:10px; background:transparent; border:none;
+    color:var(--muted); cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; transition:all 0.2s;
+  }
+  .tab-btn.active { background:var(--accent); color:#fff; }
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase; }
+  .form-group input {
+    width:100%; padding:12px 16px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:14px;
+    transition:border 0.2s; outline:none;
+  }
+  .form-group input:focus { border-color:var(--accent); }
+  .form-divider { text-align:center; color:var(--muted); font-size:12px; margin:18px 0; position:relative; }
+  .form-divider::before, .form-divider::after {
+    content:''; position:absolute; top:50%; width:42%; height:1px; background:var(--border);
+  }
+  .form-divider::before { left:0; } .form-divider::after { right:0; }
+  .google-btn {
+    width:100%; padding:12px; border-radius:10px;
+    background:var(--surface); border:1px solid var(--border);
+    color:var(--text); cursor:pointer; font-family:'DM Sans',sans-serif;
+    font-size:14px; font-weight:500; display:flex; align-items:center;
+    justify-content:center; gap:10px; transition:all 0.2s;
+  }
+  .google-btn:hover { border-color:var(--accent); }
+  .google-icon { width:18px; height:18px; }
+  .error-msg { color:var(--error); font-size:12px; margin-top:8px; display:none; }
+  .error-msg.show { display:block; }
+  .success-msg { color:var(--success); font-size:12px; margin-top:8px; display:none; }
+  .success-msg.show { display:block; }
 
-        .auth-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; font-family: 'Poppins'; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .login-btn { background: #fff; color: #000; }
-        .logout-btn { background: rgba(255,255,255,0.05); color: #ff4d4d; border: 1px solid rgba(204,0,0,0.2); margin-top: 10px; }
+  /* ===== HOME PAGE ===== */
+  .hero {
+    min-height:100vh; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center; padding:100px 24px 60px;
+  }
+  .hero-badge {
+    display:inline-block; padding:6px 16px; border-radius:999px;
+    border:1px solid rgba(124,92,252,0.4);
+    background:rgba(124,92,252,0.1);
+    font-size:12px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--accent); margin-bottom:28px;
+  }
+  .hero h1 {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:clamp(56px,10vw,120px);
+    line-height:0.9; letter-spacing:2px;
+    background:linear-gradient(135deg,#fff 40%,var(--accent));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    margin-bottom:20px;
+  }
+  .hero p { color:var(--muted); font-size:16px; max-width:480px; line-height:1.7; margin-bottom:36px; }
+  .hero-btns { display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
 
-        /* ===== HEADER & GRID (Original Styles) ===== */
-        .header { text-align:center; padding:60px 20px 25px; position:relative; z-index:10; }
-        .logo { font-size:3rem; font-weight:700; background:linear-gradient(135deg,#ff4d4d,#cc0000); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-        .menu-btn { position:fixed; top:20px; left:20px; width:48px; height:48px; background:linear-gradient(135deg,#cc0000,#990000); border:none; border-radius:12px; color:#fff; cursor:pointer; z-index:1001; box-shadow:0 4px 15px rgba(204,0,0,0.4); }
-        .wallpaper-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 16px 20px; max-width:600px; margin:0 auto; position:relative; z-index:5; }
-        .wallpaper-card { border-radius:20px; overflow:hidden; background:#111; position:relative; cursor:pointer; transition:0.3s; }
-        .wallpaper-card:nth-child(even) { margin-top:20px; }
-        .wallpaper-card img { width:100%; object-fit:cover; display:block; }
-        
-        .filter-container { display:flex; gap:10px; padding:20px; overflow-x:auto; scrollbar-width:none; justify-content: center; }
-        .filter-btn { padding:8px 20px; background:rgba(255,255,255,0.05); border:1px solid rgba(204,0,0,0.3); border-radius:20px; color:#ff9999; cursor:pointer; white-space:nowrap; }
-        .filter-btn.active { background:#cc0000; color:#fff; }
+  /* gallery preview */
+  .gallery-strip {
+    display:flex; gap:12px; overflow:hidden;
+    padding:0 24px 60px; justify-content:center; flex-wrap:wrap;
+  }
+  .gallery-card {
+    width:160px; height:240px; border-radius:14px;
+    background:var(--card); border:1px solid var(--border);
+    overflow:hidden; position:relative; flex-shrink:0;
+    transition:transform 0.3s;
+  }
+  .gallery-card:hover { transform:translateY(-6px); }
+  .gallery-card img { width:100%; height:100%; object-fit:cover; }
+  .gallery-card .card-overlay {
+    position:absolute; inset:0;
+    background:linear-gradient(to top,rgba(0,0,0,0.7),transparent);
+    display:flex; align-items:flex-end; padding:12px;
+    opacity:0; transition:opacity 0.2s;
+  }
+  .gallery-card:hover .card-overlay { opacity:1; }
+  .card-overlay span { font-size:11px; color:#fff; }
 
-        .toast { position:fixed; bottom:25px; left:50%; transform:translateX(-50%) translateY(100px); background:#cc0000; color:#fff; padding:12px 24px; border-radius:25px; z-index:5000; transition:0.4s; opacity:0; box-shadow: 0 5px 15px rgba(204,0,0,0.3); }
-        .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  /* ===== PROFILE PAGE ===== */
+  #profile-page {
+    padding-top:90px; min-height:100vh;
+  }
+  .profile-header {
+    background:var(--card); border-bottom:1px solid var(--border);
+    padding:40px 32px 32px;
+    display:flex; align-items:center; gap:24px;
+    flex-wrap:wrap;
+  }
+  .avatar {
+    width:80px; height:80px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue',sans-serif; font-size:32px; color:#fff;
+    flex-shrink:0;
+  }
+  .avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  .profile-info h2 { font-size:22px; font-weight:500; margin-bottom:4px; }
+  .profile-info p { color:var(--muted); font-size:13px; }
+  .profile-stats { margin-left:auto; display:flex; gap:32px; }
+  .stat { text-align:center; }
+  .stat-num { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--accent); }
+  .stat-label { font-size:11px; color:var(--muted); letter-spacing:0.5px; }
+  .profile-body { padding:32px; }
+  .section-title {
+    font-family:'Bebas Neue',sans-serif; font-size:22px;
+    letter-spacing:1px; margin-bottom:20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-title::after {
+    content:''; flex:1; height:1px; background:var(--border);
+  }
+  .user-gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .user-wp-card {
+    aspect-ratio:9/16; border-radius:12px;
+    background:var(--card); border:1px solid var(--border);
+    overflow:hidden; cursor:pointer; transition:transform 0.2s;
+    position:relative;
+  }
+  .user-wp-card:hover { transform:scale(1.03); }
+  .placeholder-wp {
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px; opacity:0.3;
+  }
+  .logout-btn {
+    position:fixed; bottom:24px; right:24px;
+    background:var(--card); border:1px solid var(--error);
+    color:var(--error); padding:10px 20px; border-radius:10px;
+    cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px;
+    transition:all 0.2s; z-index:50;
+  }
+  .logout-btn:hover { background:var(--error); color:#fff; }
 
-        @media(max-width:480px){.logo{font-size:2rem;}.wallpaper-grid{grid-template-columns:1fr 1fr;}}
-    </style>
+  /* Loading spinner */
+  .spinner {
+    width:20px; height:20px; border:2px solid rgba(255,255,255,0.2);
+    border-top-color:#fff; border-radius:50%;
+    animation:spin 0.7s linear infinite; display:inline-block;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
 </head>
 <body>
 
-<div class="bg-animation"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
-<div class="particles-container" id="particlesContainer"></div>
-<div class="snow-container" id="snowContainer"></div>
+<!-- NAV -->
+<nav>
+  <div class="logo">WallHub</div>
+  <div class="nav-actions" id="nav-actions">
+    <button class="btn btn-ghost" onclick="openModal('login')">Login</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Sign Up</button>
+  </div>
+</nav>
 
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar" id="sidebar">
-    <div class="user-section" id="userSection">
-        <div id="authContent">
-            <i class="fas fa-user-circle user-no-img"></i>
-            <p style="font-size: 0.85rem; margin-bottom: 15px; color: #cc6666;">Sign in to sync your story</p>
-            <button class="auth-btn login-btn" onclick="loginWithGoogle()">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Google Login
-            </button>
-        </div>
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Welcome Back</div>
+    <div class="modal-sub" id="modal-sub">Sign in to your account</div>
+
+    <div class="tabs">
+      <button class="tab-btn" id="tab-login" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Register</button>
     </div>
 
-    <div style="padding: 25px;">
-        <div style="color: #ff4d4d; font-size: 0.9rem; font-weight: 600; margin-bottom: 15px;"><i class="fas fa-code"></i> Developers</div>
-        <p style="font-size: 0.85rem; color: #cc6666; margin-bottom: 5px;">Gavesh Vimanshana</p>
-        <p style="font-size: 0.85rem; color: #cc6666;">P Kaveesha</p>
+    <!-- Google -->
+    <button class="google-btn" onclick="googleSignIn()">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="form-divider">or</div>
+
+    <!-- Email/Pass form -->
+    <div id="auth-form">
+      <div class="form-group" id="name-group" style="display:none">
+        <label>Full Name</label>
+        <input type="text" id="inp-name" placeholder="John Doe" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="inp-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="inp-pass" placeholder="••••••••" />
+      </div>
+      <div class="error-msg" id="auth-error"></div>
+      <div class="success-msg" id="auth-success"></div>
+      <button class="btn btn-primary" style="width:100%;margin-top:8px;padding:13px" id="submit-btn" onclick="handleSubmit()">
+        <span id="submit-text">Sign In</span>
+      </button>
     </div>
-</aside>
+  </div>
+</div>
 
-<button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
-
-<header class="header">
-    <h1 class="logo">Wallpaper Story</h1>
-    <p style="color: #ff9999; font-size: 0.9rem;">High quality wallpapers for you</p>
-</header>
-
-<section class="filter-section">
-    <div class="filter-container">
-        <button class="filter-btn active">✦ All</button>
-        <button class="filter-btn">🌿 Nature</button>
-        <button class="filter-btn">⚡ Anime</button>
-        <button class="filter-btn">🚗 Cars</button>
+<!-- HOME PAGE -->
+<div class="page active" id="home-page">
+  <div class="hero">
+    <div class="hero-badge">✦ Free Wallpapers</div>
+    <h1>WALL<br>HUB</h1>
+    <p>Discover thousands of stunning wallpapers. Curated for every screen, every mood.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" onclick="openModal('register')">Get Started Free</button>
+      <button class="btn btn-ghost" onclick="openModal('login')">Sign In</button>
     </div>
-</section>
+  </div>
+  <div class="gallery-strip">
+    <div class="gallery-card" style="background:linear-gradient(135deg,#667eea,#764ba2)"><div class="card-overlay"><span>Abstract</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#f093fb,#f5576c)"><div class="card-overlay"><span>Neon</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><div class="card-overlay"><span>Ocean</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"><div class="card-overlay"><span>Nature</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#fa709a,#fee140)"><div class="card-overlay"><span>Sunset</span></div></div>
+    <div class="gallery-card" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb)"><div class="card-overlay"><span>Galaxy</span></div></div>
+  </div>
+</div>
 
-<main class="wallpaper-grid" id="wallpaperGrid"></main>
+<!-- PROFILE PAGE -->
+<div class="page" id="profile-page">
+  <div class="profile-header">
+    <div class="avatar" id="user-avatar">U</div>
+    <div class="profile-info">
+      <h2 id="user-displayname">User Name</h2>
+      <p id="user-email-display">user@email.com</p>
+      <p style="font-size:12px;color:var(--accent);margin-top:4px" id="user-joined"></p>
+    </div>
+    <div class="profile-stats">
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Uploads</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Saved</div></div>
+      <div class="stat"><div class="stat-num">0</div><div class="stat-label">Likes</div></div>
+    </div>
+  </div>
+  <div class="profile-body">
+    <div class="section-title">My Wallpapers</div>
+    <div class="user-gallery" id="user-gallery">
+      <div class="user-wp-card" style="border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;cursor:pointer">
+        <span style="font-size:28px;opacity:0.4">+</span>
+        <span style="font-size:11px;color:var(--muted)">Upload</span>
+      </div>
+    </div>
+  </div>
+  <button class="logout-btn" onclick="signOut()">Sign Out</button>
+</div>
 
-<div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMessage"></span></div>
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  GoogleAuthProvider, signInWithPopup, signOut as fbSignOut,
+  onAuthStateChanged, updateProfile
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-<script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBI-A1vwTeYaD-z6CeYAQ2IdQ3m_GXyA8M",
   authDomain: "wallpaper-8f90c.firebaseapp.com",
@@ -121,84 +385,157 @@ const firebaseConfig = {
   measurementId: "G-0PEF2WCBJE"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const provider = new firebase.auth.GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-// ===== AUTH LOGIC =====
-function loginWithGoogle() {
-    auth.signInWithPopup(provider).then((result) => {
-        showToast("Welcome " + result.user.displayName);
-    }).catch((err) => { showToast("Login Error!"); console.log(err); });
-}
+// Expose to window
+window._auth = auth;
+window._provider = provider;
+window._fbFns = { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, fbSignOut, updateProfile };
 
-function logout() {
-    auth.signOut().then(() => showToast("Logged Out"));
-}
-
-function updateProfileUI(user) {
-    const authContent = document.getElementById('authContent');
-    if (user) {
-        authContent.innerHTML = `
-            <img src="${user.photoURL}" class="user-img" alt="Profile">
-            <div class="user-name">${user.displayName}</div>
-            <div class="user-email">${user.email}</div>
-            <button class="auth-btn logout-btn" onclick="logout()">Logout</button>
-        `;
-    } else {
-        authContent.innerHTML = `
-            <i class="fas fa-user-circle user-no-img"></i>
-            <p style="font-size: 0.85rem; margin-bottom: 15px; color: #cc6666;">Sign in to sync your story</p>
-            <button class="auth-btn login-btn" onclick="loginWithGoogle()">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18"> Google Login
-            </button>
-        `;
-    }
-}
-
-auth.onAuthStateChanged(user => updateProfileUI(user));
-
-// ===== WALLPAPER DATA & RENDER =====
-const wallpapers = [
-    {id:1,title:"Jellyfish Glow",url:"https://images.unsplash.com/photo-1546026423-cc4642628d2b?w=800",h:"320px"},
-    {id:2,title:"Autumn Forest",url:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800",h:"260px"},
-    {id:3,title:"Cyber City",url:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?w=800",h:"260px"},
-    {id:4,title:"Supercar",url:"https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=800",h:"320px"},
-    {id:5,title:"Dark Mountain",url:"https://images.unsplash.com/photo-1511497584788-876760111969?w=800",h:"260px"},
-    {id:6,title:"Abstract Art",url:"https://images.unsplash.com/photo-1550684376-efcbd6e3f031?w=800",h:"260px"}
-];
-
-function renderWallpapers() {
-    const grid = document.getElementById('wallpaperGrid');
-    grid.innerHTML = wallpapers.map(w => `
-        <div class="wallpaper-card">
-            <img src="${w.url}" style="height:${w.h}">
-            <div style="padding:12px; font-size:0.85rem; font-weight:500;">${w.title}</div>
-        </div>
-    `).join('');
-}
-
-// ===== EFFECTS (Snow, Particles, Sidebar) =====
-function createSnow(){const c=document.getElementById('snowContainer');for(let i=0;i<30;i++){const f=document.createElement('div');f.className='snowflake';f.innerHTML='&#10052;';f.style.cssText=`left:${Math.random()*100}%;animation-duration:${Math.random()*5+5}s;animation-delay:${Math.random()*5}s;font-size:${Math.random()*10+5}px;`;c.appendChild(f);}}
-function createParticles(){const c=document.getElementById('particlesContainer');for(let i=0;i<20;i++){const p=document.createElement('div');const sz=Math.random()*5+2;p.className='particle';p.style.cssText=`left:${Math.random()*100}%;width:${sz}px;height:${sz}px;animation-duration:${Math.random()*10+10}s;--drift:${(Math.random()-0.5)*150}px`;c.appendChild(p);}}
-
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('sidebarOverlay');
-document.getElementById('menuBtn').onclick = () => { sidebar.classList.add('active'); overlay.classList.add('active'); };
-overlay.onclick = () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); };
-
-function showToast(msg) {
-    const t = document.getElementById('toast');
-    document.getElementById('toastMessage').textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    renderWallpapers();
-    createSnow();
-    createParticles();
+// Auth state
+onAuthStateChanged(auth, (user) => {
+  if (user) showProfile(user);
+  else showHome();
 });
+
+function showProfile(user) {
+  document.getElementById('home-page').classList.remove('active');
+  document.getElementById('profile-page').classList.add('active');
+  closeModal();
+
+  const name = user.displayName || user.email.split('@')[0];
+  document.getElementById('user-displayname').textContent = name;
+  document.getElementById('user-email-display').textContent = user.email;
+  document.getElementById('user-joined').textContent = '✦ Member since ' + new Date(user.metadata.creationTime).toLocaleDateString('en-US',{year:'numeric',month:'long'});
+  
+  const av = document.getElementById('user-avatar');
+  if (user.photoURL) {
+    av.innerHTML = `<img src="${user.photoURL}" alt="avatar">`;
+  } else {
+    av.textContent = name[0].toUpperCase();
+  }
+
+  // Nav
+  document.getElementById('nav-actions').innerHTML = `
+    <span style="font-size:13px;color:var(--muted)">Hi, ${name.split(' ')[0]}</span>
+    <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
+  `;
+}
+
+function showHome() {
+  document.getElementById('home-page').classList.add('active');
+  document.getElementById('profile-page').classList.remove('active');
+  document.getElementById('nav-actions').innerHTML = `
+    <button class="btn btn-ghost" onclick="openModal('login')">Login</button>
+    <button class="btn btn-primary" onclick="openModal('register')">Sign Up</button>
+  `;
+}
+
+window.showProfile = showProfile;
+window.showHome = showHome;
+</script>
+
+<script>
+let currentTab = 'login';
+
+function openModal(tab) {
+  document.getElementById('auth-modal').classList.add('open');
+  switchTab(tab);
+}
+function closeModal() {
+  document.getElementById('auth-modal').classList.remove('open');
+  clearMessages();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+  document.getElementById('name-group').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('modal-title').textContent = tab==='login' ? 'Welcome Back' : 'Create Account';
+  document.getElementById('modal-sub').textContent = tab==='login' ? 'Sign in to your account' : 'Join WallHub today — it\'s free';
+  document.getElementById('submit-text').textContent = tab==='login' ? 'Sign In' : 'Create Account';
+  clearMessages();
+}
+
+function clearMessages() {
+  const e = document.getElementById('auth-error');
+  const s = document.getElementById('auth-success');
+  e.classList.remove('show'); e.textContent='';
+  s.classList.remove('show'); s.textContent='';
+}
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.classList.add('show');
+}
+function showSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg; el.classList.add('show');
+}
+
+function setLoading(yes) {
+  const btn = document.getElementById('submit-btn');
+  const txt = document.getElementById('submit-text');
+  if(yes) { txt.innerHTML='<span class="spinner"></span>'; btn.disabled=true; }
+  else { txt.textContent = currentTab==='login'?'Sign In':'Create Account'; btn.disabled=false; }
+}
+
+async function handleSubmit() {
+  clearMessages();
+  const email = document.getElementById('inp-email').value.trim();
+  const pass = document.getElementById('inp-pass').value;
+  const name = document.getElementById('inp-name').value.trim();
+  if(!email||!pass){ showError('Please fill in all fields.'); return; }
+  setLoading(true);
+  try {
+    const fns = window._fbFns;
+    const auth = window._auth;
+    if(currentTab==='login') {
+      await fns.signInWithEmailAndPassword(auth, email, pass);
+    } else {
+      if(!name){ showError('Please enter your name.'); setLoading(false); return; }
+      const cred = await fns.createUserWithEmailAndPassword(auth, email, pass);
+      await fns.updateProfile(cred.user, { displayName: name });
+      showSuccess('Account created! Welcome to WallHub 🎉');
+    }
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found':'No account found. Please register.',
+      'auth/wrong-password':'Incorrect password. Try again.',
+      'auth/email-already-in-use':'Email already registered. Please login.',
+      'auth/weak-password':'Password must be at least 6 characters.',
+      'auth/invalid-email':'Please enter a valid email.',
+      'auth/invalid-credential':'Invalid email or password.'
+    };
+    showError(msgs[e.code] || e.message);
+  }
+  setLoading(false);
+}
+
+async function googleSignIn() {
+  try {
+    await window._fbFns.signInWithPopup(window._auth, window._provider);
+  } catch(e) {
+    showError('Google sign-in failed. Try again.');
+  }
+}
+
+async function signOut() {
+  await window._fbFns.fbSignOut(window._auth);
+}
+
+// Close modal on overlay click
+document.getElementById('auth-modal').addEventListener('click', function(e){
+  if(e.target===this) closeModal();
+});
+
+// Expose
+window.openModal=openModal; window.closeModal=closeModal;
+window.switchTab=switchTab; window.handleSubmit=handleSubmit;
+window.googleSignIn=googleSignIn; window.signOut=signOut;
 </script>
 </body>
 </html>
