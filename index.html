@@ -550,6 +550,20 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
         <div class="stc"><div class="sn" id="stO">0</div><div class="sl">Total</div></div>
         <div class="stc"><div class="sn" style="color:var(--gold);">🔥</div><div class="sl">Live</div></div>
       </div>
+
+      <!-- Firebase Rules Notice -->
+      <div id="fbRulesNotice" style="background:rgba(245,197,24,.07);border:1px solid rgba(245,197,24,.25);border-radius:10px;padding:16px 18px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-start;">
+        <div style="font-size:22px;flex:0 0 auto;">⚡</div>
+        <div>
+          <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:var(--gold);margin-bottom:6px;">FIREBASE RULES — SET THIS FOR FAST COMMENTS</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:10px;">Firebase Console → Realtime Database → Rules → Paste this → Publish:</div>
+          <div style="background:rgba(0,0,0,.4);border-radius:6px;padding:10px 14px;font-family:monospace;font-size:12px;color:#4caf50;line-height:1.6;position:relative;">
+            {<br>&nbsp;&nbsp;"rules": {<br>&nbsp;&nbsp;&nbsp;&nbsp;".read": true,<br>&nbsp;&nbsp;&nbsp;&nbsp;".write": true<br>&nbsp;&nbsp;}<br>}
+            <button onclick="copyRules()" style="position:absolute;top:8px;right:8px;background:rgba(245,197,24,.2);border:1px solid rgba(245,197,24,.4);color:var(--gold);padding:4px 10px;border-radius:4px;font-size:10px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;">COPY</button>
+          </div>
+          <div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:8px;">⚠️ Open access – switch to authenticated rules for production</div>
+        </div>
+      </div>
       <div class="atabs">
         <div class="atab act" onclick="swTab('add',this)">➕ ADD CONTENT</div>
         <div class="atab" onclick="swTab('manage',this)">📋 MANAGE / EDIT</div>
@@ -681,23 +695,74 @@ let loggedIn = false, manFilt = 'all', editId = null;
 let addedBanners = []; // for admin form banners
 
 // ===== FIREBASE LISTENER =====
+// ⚡ Firebase Realtime DB Rules (paste in Firebase Console > Realtime Database > Rules):
+// {
+//   "rules": {
+//     "content": { ".read": true, ".write": "auth != null" },
+//     "comments": { ".read": true, ".write": true }
+//   }
+// }
+// OR for full open access (testing):
+// { "rules": { ".read": true, ".write": true } }
+
 function initFB() {
   setFbStat(false,'Connecting...');
-  DB.ref('content').on('value', snap => {
-    const prev = allC.length;
-    const d = snap.val();
-    allC = d ? Object.values(d) : [];
-    allC.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    setFbStat(true,'Firebase Connected');
-    renderAll();
-    updateStats();
-    if(loggedIn) renderManList();
-    // Notify if new content added
-    if(d && allC.length > prev && prev > 0) {
-      const newest = allC[0];
-      showNotif(`New: ${newest.title}`, newest.type==='tvseries'?'TV Series Added 📺':'Movie Added 🎬');
+
+  // ⚡ Step 1: Load demo data immediately so UI is instant
+  loadDemo();
+
+  // ⚡ Step 2: Set connection timeout – if Firebase takes >6s show demo
+  const fbTimeout = setTimeout(() => {
+    if(allC.length === 0) { setFbStat(false,'Timeout – Using Demo Data'); loadDemo(); }
+  }, 6000);
+
+  // ⚡ Step 3: Check connection state first (fast)
+  DB.ref('.info/connected').on('value', snap => {
+    if(snap.val() === true) {
+      setFbStat(true,'Firebase Connected');
+      clearTimeout(fbTimeout);
+    } else {
+      setFbStat(false,'Reconnecting...');
     }
-  }, e => { setFbStat(false,'Error – Using Demo Data'); loadDemo(); });
+  });
+
+  // ⚡ Step 4: Load content - use 'once' first for speed, then switch to 'on' for live updates
+  DB.ref('content').orderByChild('createdAt').once('value').then(snap => {
+    clearTimeout(fbTimeout);
+    const d = snap.val();
+    if(d) {
+      allC = Object.values(d);
+      allC.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      setFbStat(true,'Firebase Connected');
+      renderAll(); updateStats();
+      if(loggedIn) renderManList();
+      // Cache to localStorage for next load
+      try { localStorage.setItem('ms_cache', JSON.stringify(allC)); localStorage.setItem('ms_cache_ts', Date.now()); } catch(e){}
+    }
+    // Now subscribe for live updates
+    DB.ref('content').on('value', snap2 => {
+      const prev = allC.length;
+      const d2 = snap2.val();
+      allC = d2 ? Object.values(d2) : [];
+      allC.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      renderAll(); updateStats();
+      if(loggedIn) renderManList();
+      if(d2 && allC.length > prev && prev > 0) {
+        const newest = allC[0];
+        showNotif(`New: ${newest.title}`, newest.type==='tvseries'?'TV Series Added 📺':'Movie Added 🎬');
+      }
+      try { localStorage.setItem('ms_cache', JSON.stringify(allC)); } catch(e){}
+    });
+  }).catch(e => {
+    clearTimeout(fbTimeout);
+    setFbStat(false,'Permission Denied – Demo Mode');
+    // Try localStorage cache
+    try {
+      const cached = localStorage.getItem('ms_cache');
+      if(cached) { allC = JSON.parse(cached); renderAll(); updateStats(); showToast('Loaded from cache 💾'); return; }
+    } catch(err){}
+    loadDemo();
+  });
 }
 
 function setFbStat(ok,txt) {
@@ -709,6 +774,18 @@ function setFbStat(ok,txt) {
 
 // ===== DEMO DATA =====
 function loadDemo() {
+  // ⚡ Check localStorage cache first (instant load)
+  try {
+    const cached = localStorage.getItem('ms_cache');
+    const ts = parseInt(localStorage.getItem('ms_cache_ts')||'0');
+    // Use cache if less than 30 minutes old
+    if(cached && Date.now()-ts < 30*60*1000) {
+      allC = JSON.parse(cached);
+      allC.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+      renderAll(); updateStats();
+      return;
+    }
+  } catch(e){}
   allC = [
     {id:'d1',type:'movie',title:'Oppenheimer',category:'Drama',year:2023,rating:8.9,thumb:'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg',banners:['https://image.tmdb.org/t/p/original/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg'],desc:'The story of J. Robert Oppenheimer and the development of the atomic bomb during World War II.',writer:'Gavesh Vimanshana',links:{p480:'',p720:'',p1080:''},downloads:{p480:'',p720:'',p1080:''},trailer:'https://www.youtube.com/embed/uYPbbksJxIg',subtitle:'',createdAt:Date.now()},
     {id:'d2',type:'movie',title:'Dune: Part Two',category:'Sci-Fi',year:2024,rating:8.7,thumb:'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',banners:['https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg'],desc:'Paul Atreides unites with Chani and the Fremen while seeking revenge against the conspirators.',writer:'P Kaveesha',links:{p480:'',p720:'',p1080:''},downloads:{p480:'',p720:'',p1080:''},trailer:'https://www.youtube.com/embed/Way9Dexny3w',subtitle:'',createdAt:Date.now()-1e3},
@@ -1015,46 +1092,119 @@ function addWL() {
   else showToast('Already in Watchlist');
 }
 
-// ===== COMMENTS =====
+// ===== COMMENTS (Optimized + Firebase + Local fallback) =====
+let _cmtRef = null;
+let _localCmts = {}; // local comment cache per content id
+
 function loadComments() {
   if(!curC) return;
-  const ref=DB.ref('comments/'+curC.id);
-  ref.off();
-  ref.on('value', snap=>{
-    const d=snap.val();
-    const cmts=d?Object.values(d):[];
-    cmts.sort((a,b)=>b.ts-a.ts);
-    document.getElementById('cmtList').innerHTML=cmts.map(c=>`
-      <div class="cmt-item">
-        <div class="cmt-item-top">
-          <div class="cmt-item-av" style="background:${c.color||'linear-gradient(135deg,#333,#555)'};">${(c.name||'U')[0].toUpperCase()}</div>
-          <div class="cmt-meta"><div class="cmt-user">${c.name||'Anonymous'}</div><div class="cmt-time">${timeAgo(c.ts)}</div></div>
-          <div class="cmt-like" onclick="likeCmt(this,'${c.id}',${c.likes||0})"><i class="fas fa-heart"></i> ${c.likes||0}</div>
-        </div>
-        <div class="cmt-body">${c.body}</div>
-      </div>`).join('') || '<div style="color:var(--gray);font-size:13px;text-align:center;padding:20px;">No comments yet. Be the first!</div>';
+  const listEl = document.getElementById('cmtList');
+
+  // ⚡ Step 1: Show cached comments instantly
+  const cached = _localCmts[curC.id] || [];
+  if(cached.length) renderCmts(cached);
+  else listEl.innerHTML = '<div style="color:var(--gray);font-size:12px;text-align:center;padding:24px;"><i class="fas fa-spinner fa-spin" style="color:var(--red);margin-bottom:8px;display:block;font-size:20px;"></i>Loading comments...</div>';
+
+  // ⚡ Step 2: Detach old listener
+  if(_cmtRef) { _cmtRef.off(); _cmtRef = null; }
+
+  // ⚡ Step 3: Load comments with 'once' first for speed, then live listener
+  const ref = DB.ref('comments/' + curC.id);
+  _cmtRef = ref;
+
+  ref.orderByChild('ts').limitToLast(50).once('value').then(snap => {
+    const d = snap.val();
+    const cmts = d ? Object.values(d) : [];
+    cmts.sort((a,b) => b.ts - a.ts);
+    _localCmts[curC.id] = cmts;
+    renderCmts(cmts);
+
+    // Now attach live listener for new comments
+    ref.orderByChild('ts').startAt(Date.now()).on('child_added', snap2 => {
+      const nc = snap2.val();
+      if(!nc) return;
+      const existing = _localCmts[curC.id] || [];
+      if(!existing.find(c => c.id === nc.id)) {
+        _localCmts[curC.id] = [nc, ...existing];
+        renderCmts(_localCmts[curC.id]);
+      }
+    });
+  }).catch(() => {
+    // Firebase rules blocking – show local only
+    const cmts = _localCmts[curC.id] || [];
+    if(!cmts.length) {
+      listEl.innerHTML = `<div style="color:var(--gray);font-size:12px;text-align:center;padding:24px;">
+        <i class="fas fa-lock" style="color:var(--red);margin-bottom:8px;display:block;font-size:20px;"></i>
+        Comments require Firebase Rules update.<br>
+        <span style="font-size:10px;color:rgba(255,255,255,.3);">Set rules to allow read/write in Firebase Console</span>
+      </div>`;
+    } else renderCmts(cmts);
   });
+}
+
+function renderCmts(cmts) {
+  const listEl = document.getElementById('cmtList');
+  if(!listEl) return;
+  if(!cmts.length) {
+    listEl.innerHTML = '<div style="color:var(--gray);font-size:13px;text-align:center;padding:24px;">No comments yet. Be the first! 💬</div>';
+    return;
+  }
+  listEl.innerHTML = cmts.map(c => `
+    <div class="cmt-item" id="cmt-${c.id}">
+      <div class="cmt-item-top">
+        <div class="cmt-item-av" style="background:${c.color||'linear-gradient(135deg,#333,#555)'};">${(c.name||'U')[0].toUpperCase()}</div>
+        <div class="cmt-meta">
+          <div class="cmt-user">${escHtml(c.name||'Anonymous')}</div>
+          <div class="cmt-time">${timeAgo(c.ts)}</div>
+        </div>
+        <div class="cmt-like${c._liked?' liked':''}" onclick="likeCmt(this,'${c.id}',${c.likes||0})">
+          <i class="fas fa-heart"></i> <span class="lc">${c.likes||0}</span>
+        </div>
+      </div>
+      <div class="cmt-body">${escHtml(c.body)}</div>
+    </div>`).join('');
 }
 
 function sendComment() {
   if(!curC) return;
-  const name=document.getElementById('cmtName').value.trim()||'Anonymous';
-  const body=document.getElementById('cmtTxt').value.trim();
-  if(!body){showToast('Write a comment first!');return;}
-  const colors=['linear-gradient(135deg,#e50914,#b20710)','linear-gradient(135deg,#1a73e8,#0d47a1)','linear-gradient(135deg,#4caf50,#2e7d32)','linear-gradient(135deg,#ff9800,#e65100)','linear-gradient(135deg,#9c27b0,#6a1b9a)'];
-  const cmt={id:'c'+Date.now(),name,body,ts:Date.now(),likes:0,color:colors[Math.floor(Math.random()*colors.length)]};
-  DB.ref('comments/'+curC.id+'/'+cmt.id).set(cmt).then(()=>{
-    document.getElementById('cmtTxt').value='';
-    showToast('Comment posted! 💬');
-  }).catch(()=>{showToast('Posted locally (Firebase permission needed)');});
+  const name = document.getElementById('cmtName').value.trim() || 'Anonymous';
+  const body = document.getElementById('cmtTxt').value.trim();
+  if(!body) { showToast('Write a comment first!'); return; }
+
+  const colors = ['linear-gradient(135deg,#e50914,#b20710)','linear-gradient(135deg,#1a73e8,#0d47a1)','linear-gradient(135deg,#4caf50,#2e7d32)','linear-gradient(135deg,#ff9800,#e65100)','linear-gradient(135deg,#9c27b0,#6a1b9a)'];
+  const cmt = { id:'c'+Date.now(), name, body, ts:Date.now(), likes:0, color:colors[Math.floor(Math.random()*colors.length)] };
+
+  // ⚡ Optimistic UI – show comment instantly before Firebase responds
+  const existing = _localCmts[curC.id] || [];
+  _localCmts[curC.id] = [cmt, ...existing];
+  renderCmts(_localCmts[curC.id]);
+  document.getElementById('cmtTxt').value = '';
+  showToast('Comment posted! 💬');
+
+  // Send to Firebase in background
+  DB.ref('comments/' + curC.id + '/' + cmt.id).set(cmt).catch(() => {
+    // Firebase failed – comment stays local (already shown)
+    showToast('Saved locally (update Firebase Rules for persistence)');
+  });
 }
 
-function likeCmt(el,id,cur) {
+function likeCmt(el, id, cur) {
   if(el.classList.contains('liked')) return;
   el.classList.add('liked');
-  const newL=cur+1;
-  el.innerHTML=`<i class="fas fa-heart"></i> ${newL}`;
-  if(curC) DB.ref('comments/'+curC.id+'/'+id+'/likes').set(newL);
+  const newL = cur + 1;
+  const span = el.querySelector('.lc');
+  if(span) span.textContent = newL;
+  // Update local cache
+  if(curC && _localCmts[curC.id]) {
+    const c = _localCmts[curC.id].find(x=>x.id===id);
+    if(c) c.likes = newL;
+  }
+  // Update Firebase
+  if(curC) DB.ref('comments/' + curC.id + '/' + id + '/likes').set(newL).catch(()=>{});
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function updateAvatar() {
@@ -1068,6 +1218,11 @@ function timeAgo(ts) {
   if(s<3600) return Math.floor(s/60)+'m ago';
   if(s<86400) return Math.floor(s/3600)+'h ago';
   return Math.floor(s/86400)+'d ago';
+}
+
+function copyRules() {
+  const rules = '{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}';
+  navigator.clipboard.writeText(rules).then(()=>showToast('Rules copied! Paste in Firebase Console ✅')).catch(()=>showToast('Copy manually from the box'));
 }
 
 // ===== SEARCH =====
@@ -1327,4 +1482,4 @@ function showLov(v){document.getElementById('lov').className='lov'+(v?' v':'');}
 initFB();
 </script>
 </body>
-    </html>
+</html>
