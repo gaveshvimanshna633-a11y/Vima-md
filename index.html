@@ -1427,11 +1427,26 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     const overlay=document.getElementById('subOverlay');
     if(!video||!overlay)return;
     const r=video.getBoundingClientRect();
-    // Place subtitle near bottom of actual video rect, above browser controls (~50px)
-    const subBottom=window.innerHeight-r.bottom+50;
-    overlay.style.bottom=Math.max(subBottom,10)+'px';
-    overlay.style.left=r.left+'px';
-    overlay.style.width=r.width+'px';
+    const vw=r.width, vh=r.height;
+    // Calculate actual rendered video rect inside element (letterbox/pillarbox)
+    const vAspect=video.videoWidth&&video.videoHeight?video.videoWidth/video.videoHeight:16/9;
+    const eAspect=vw/vh;
+    let rendW,rendH,rendX,rendY;
+    if(eAspect>vAspect){
+      // pillarbox - black left/right
+      rendH=vh; rendW=vh*vAspect;
+      rendX=r.left+(vw-rendW)/2; rendY=r.top;
+    } else {
+      // letterbox - black top/bottom
+      rendW=vw; rendH=vw/vAspect;
+      rendX=r.left; rendY=r.top+(vh-rendH)/2;
+    }
+    // Place subtitle 8% from bottom of rendered video area
+    const subH=40; // approx subtitle height
+    overlay.style.left=rendX+'px';
+    overlay.style.width=rendW+'px';
+    overlay.style.top=(rendY+rendH-subH-Math.max(rendH*0.06,12))+'px';
+    overlay.style.bottom='auto';
   }
 
   function subLoop(){
@@ -2137,4 +2152,4 @@ async function saveEdit(){
 }
 </script>
 </body>
-  </html>
+    </html>
