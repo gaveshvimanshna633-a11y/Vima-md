@@ -1107,12 +1107,34 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
         <p>LOADING VIDEO...</p>
       </div>
     </div>
+    <!-- Manual subtitle upload guide (shown when CORS fails) -->
+    <div class="manual-sub-wrap" id="manualSubWrap" style="display:none;">
+      <div class="manual-sub-box">
+        <div class="msb-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="msb-content">
+          <div class="msb-title">Subtitle auto-load blocked (CORS)</div>
+          <div class="msb-steps">
+            <div class="msb-step"><span class="msb-num">1</span> Download the subtitle file below</div>
+            <div class="msb-step"><span class="msb-num">2</span> Click "Load Subtitle File" and select the downloaded file</div>
+            <div class="msb-step"><span class="msb-num">3</span> Enjoy the movie with Sinhala subtitles 🇱🇰</div>
+          </div>
+          <div class="msb-btns">
+            <a id="manualSubDownloadLink" href="#" download class="msb-btn-dl" target="_blank"><i class="fas fa-download"></i> Download Subtitle</a>
+            <label class="msb-btn-upload"><i class="fas fa-folder-open"></i> Load Subtitle File<input type="file" accept=".srt,.vtt,.zip" onchange="manualSubLoad(this)" style="display:none;"></label>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="watch-controls-bar">
       <div class="watch-sub-status" id="watchSubStatus">
         <i class="fas fa-closed-captioning"></i>
         <span id="subStatusText">Subtitles: Loading...</span>
       </div>
       <div class="watch-ctrl-btns">
+        <label class="wctrl-btn" title="Load subtitle file manually" style="cursor:pointer;">
+          <i class="fas fa-upload"></i> LOAD SUB
+          <input type="file" accept=".srt,.vtt,.zip" onchange="manualSubLoad(this)" style="display:none;">
+        </label>
         <button class="wctrl-btn sub-on" onclick="toggleSubtitles()" id="subToggleBtn">
           <i class="fas fa-closed-captioning"></i> SUB ON
         </button>
@@ -1121,6 +1143,25 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
         </button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- PREMIUM GATE MODAL -->
+<div class="premium-gate" id="premiumGateModal">
+  <div class="pg-box">
+    <div class="pg-crown">👑</div>
+    <div class="pg-title">PREMIUM CONTENT</div>
+    <div class="pg-sub">This content is locked for Premium members only</div>
+    <div class="pg-features">
+      <div class="pg-feat"><i class="fas fa-play-circle"></i> Online Streaming</div>
+      <div class="pg-feat"><i class="fas fa-closed-captioning"></i> Auto Sinhala Subtitles</div>
+      <div class="pg-feat"><i class="fas fa-film"></i> 1080p Quality</div>
+      <div class="pg-feat"><i class="fas fa-infinity"></i> Unlimited Access</div>
+    </div>
+    <button class="pg-unlock-btn" onclick="unlockPremiumDemo()">
+      <i class="fas fa-crown"></i> UNLOCK PREMIUM
+    </button>
+    <button class="pg-cancel" onclick="closePremiumGate()">Maybe later</button>
   </div>
 </div>
 
@@ -1135,6 +1176,13 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 <div class="toast" id="toast"></div>
 
 <style>
+.btn-watch{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));color:#fff;border:1px solid rgba(59,130,246,0.5);padding:11px 22px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.25s;font-family:'Rajdhani',sans-serif;letter-spacing:1px;margin-bottom:10px;}
+.btn-watch:hover{border-color:#3b82f6;background:rgba(59,130,246,0.25);transform:scale(1.03);}
+.btn-watch i{color:#3b82f6;}
+.btn-watch.premium{border-color:rgba(251,191,36,0.5);background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(251,191,36,0.04));}
+.btn-watch.premium i{color:#fbbf24;}
+.btn-watch.premium:hover{border-color:#fbbf24;background:rgba(251,191,36,0.2);}
+/* Watch player modal base */
 .watch-modal{display:none;position:fixed;inset:0;background:#000;z-index:9000;flex-direction:column;}
 .watch-modal.open{display:flex;}
 .watch-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(10,10,10,0.98);border-bottom:1px solid rgba(229,9,20,0.2);flex-shrink:0;}
@@ -1153,47 +1201,88 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 .watch-spinner.hide{display:none;}
 .spinner-ring{width:44px;height:44px;border:3px solid rgba(229,9,20,0.2);border-top-color:var(--red);border-radius:50%;animation:spin 0.9s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.watch-controls-bar{background:rgba(10,10,10,0.97);border-top:1px solid rgba(255,255,255,0.06);padding:10px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.watch-sub-status{display:flex;align-items:center;gap:8px;font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,0.4);}
+.watch-controls-bar{background:rgba(10,10,10,0.97);border-top:1px solid rgba(255,255,255,0.06);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;flex-wrap:wrap;}
+.watch-sub-status{display:flex;align-items:center;gap:8px;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.4);}
 .watch-sub-status i{color:var(--green);}
-.watch-ctrl-btns{display:flex;gap:8px;}
-.wctrl-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:6px;transition:all 0.2s;}
+.watch-ctrl-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.wctrl-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;display:inline-flex;align-items:center;gap:5px;transition:all 0.2s;}
 .wctrl-btn:hover{background:var(--red);border-color:var(--red);color:#fff;}
 .wctrl-btn.sub-on{background:rgba(34,197,94,0.15);border-color:var(--green);color:var(--green);}
-.btn-watch{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.05));color:#fff;border:1px solid rgba(59,130,246,0.5);padding:11px 22px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.25s;font-family:'Rajdhani',sans-serif;letter-spacing:1px;margin-bottom:10px;}
-.btn-watch:hover{border-color:#3b82f6;background:rgba(59,130,246,0.25);transform:scale(1.03);}
-.btn-watch i{color:#3b82f6;}
+/* Manual sub guide */
+.manual-sub-wrap{background:rgba(255,140,0,0.06);border-top:1px solid rgba(255,140,0,0.2);padding:12px 16px;flex-shrink:0;}
+.manual-sub-box{display:flex;gap:12px;align-items:flex-start;}
+.msb-icon{font-size:22px;color:#f97316;flex-shrink:0;padding-top:2px;}
+.msb-content{flex:1;}
+.msb-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:#f97316;margin-bottom:6px;}
+.msb-steps{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+.msb-step{font-family:'Rajdhani',sans-serif;font-size:12px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px;}
+.msb-num{width:18px;height:18px;border-radius:50%;background:rgba(249,115,22,0.25);color:#f97316;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.msb-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.msb-btn-dl,.msb-btn-upload{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.msb-btn-dl{background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;text-decoration:none;}
+.msb-btn-dl:hover{background:rgba(249,115,22,0.25);}
+.msb-btn-upload{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);color:#3b82f6;}
+.msb-btn-upload:hover{background:rgba(59,130,246,0.22);}
+/* Premium gate */
+.premium-gate{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9500;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.premium-gate.open{display:flex;}
+.pg-box{background:linear-gradient(160deg,#1a1218,#0f0c15);border:1px solid rgba(251,191,36,0.25);border-radius:20px;padding:36px 32px;max-width:380px;width:90%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.7),0 0 60px rgba(251,191,36,0.05);}
+.pg-crown{font-size:48px;margin-bottom:12px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.pg-title{font-family:'Bebas Neue',cursive;font-size:30px;letter-spacing:4px;color:#fbbf24;margin-bottom:6px;}
+.pg-sub{font-family:'Rajdhani',sans-serif;font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:22px;letter-spacing:0.5px;}
+.pg-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:26px;}
+.pg-feat{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.15);border-radius:9px;padding:10px;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.6);display:flex;flex-direction:column;align-items:center;gap:6px;}
+.pg-feat i{color:#fbbf24;font-size:18px;}
+.pg-unlock-btn{width:100%;padding:14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:11px;color:#000;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:3px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.25s;box-shadow:0 8px 24px rgba(245,158,11,0.35);}
+.pg-unlock-btn:hover{transform:scale(1.03);box-shadow:0 12px 32px rgba(245,158,11,0.5);}
+.pg-cancel{background:none;border:none;color:rgba(255,255,255,0.3);font-family:'Rajdhani',sans-serif;font-size:12px;cursor:pointer;letter-spacing:1px;padding:4px;}
+.pg-cancel:hover{color:rgba(255,255,255,0.6);}
+/* Episode watch btn */
+.ep-watch{display:flex;align-items:center;gap:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all 0.2s;width:100%;margin-bottom:6px;}
+.ep-watch:hover{background:rgba(59,130,246,0.2);border-color:#3b82f6;}
+.ep-watch-icon{width:32px;height:32px;border-radius:7px;background:rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:13px;flex-shrink:0;}
+.ep-watch-info h5{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;color:#3b82f6;margin:0 0 2px;}
+.ep-watch-info p{font-size:10px;color:rgba(255,255,255,0.35);font-family:'Rajdhani',sans-serif;margin:0;}
 </style>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 (function(){
-  let _subCues=[];
-  let _subVisible=true;
-  let _rafId=null;
+  let _subCues=[],_subVisible=true,_rafId=null,_currentSrtUrl='';
 
-  window.openWatchPlayer=function(videoUrl,srtUrl,title){
+  // CORS proxies to try in order
+  const PROXIES=[
+    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u=>`https://cors-anywhere.herokuapp.com/${u}`,
+  ];
+
+  /* ---- PUBLIC API ---- */
+  window.openWatchPlayer=function(videoUrl,srtUrl,title,isPremium){
+    // Premium lock check
+    if(isPremium&&!window._isPremiumUser){
+      showPremiumGate(videoUrl,srtUrl,title);return;
+    }
+    _currentSrtUrl=srtUrl||'';
     document.getElementById('watchMovieTitle').textContent=title||'StreamX';
     document.getElementById('watchSpinner').classList.remove('hide');
-    document.getElementById('subStatusText').textContent='Subtitles: Loading...';
-    document.getElementById('watchSubStatus').querySelector('i').style.color='var(--green)';
+    setSubStatus('loading','Subtitles: Loading...');
     document.getElementById('subOverlay').innerHTML='';
+    document.getElementById('manualSubWrap').style.display='none';
     _subCues=[];_subVisible=true;
-    document.getElementById('subToggleBtn').className='wctrl-btn sub-on';
-    document.getElementById('subToggleBtn').innerHTML='<i class="fas fa-closed-captioning"></i> SUB ON';
+    setSubBtn(true);
 
     const video=document.getElementById('watchVideo');
-    video.src=videoUrl;
-    video.load();
+    video.src=videoUrl;video.load();
     video.oncanplay=()=>document.getElementById('watchSpinner').classList.add('hide');
 
     document.getElementById('watchModal').classList.add('open');
     document.body.style.overflow='hidden';
-
     if(window._trackDownload)window._trackDownload();
 
-    if(srtUrl)loadSub(srtUrl);
-    else{document.getElementById('subStatusText').textContent='No subtitles';document.getElementById('watchSubStatus').querySelector('i').style.color='var(--gray)';}
+    if(srtUrl)loadSubAuto(srtUrl,0);
+    else setSubStatus('off','No subtitles available');
 
     if(_rafId)cancelAnimationFrame(_rafId);
     _rafId=requestAnimationFrame(subLoop);
@@ -1210,49 +1299,121 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 
   window.toggleSubtitles=function(){
     _subVisible=!_subVisible;
-    const btn=document.getElementById('subToggleBtn');
-    btn.className='wctrl-btn'+(_subVisible?' sub-on':'');
-    btn.innerHTML='<i class="fas fa-closed-captioning"></i> SUB '+(_subVisible?'ON':'OFF');
+    setSubBtn(_subVisible);
     if(!_subVisible)document.getElementById('subOverlay').innerHTML='';
   };
 
-  async function loadSub(url){
+  // Manual SRT/ZIP file upload by user
+  window.manualSubLoad=function(input){
+    const file=input.files[0];if(!file)return;
     const st=document.getElementById('subStatusText');
-    const ic=document.getElementById('watchSubStatus').querySelector('i');
+    st.textContent='Reading file...';
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      try{
+        const buf=e.target.result;
+        const bytes=new Uint8Array(buf);
+        let srtText='';
+        if(bytes[0]===0x50&&bytes[1]===0x4B){
+          st.textContent='Extracting ZIP...';
+          const zip=await JSZip.loadAsync(buf);
+          const f=Object.values(zip.files).find(x=>x.name.toLowerCase().endsWith('.srt')&&!x.dir);
+          if(!f)throw new Error('No SRT in ZIP');
+          srtText=await f.async('string');
+        } else {
+          srtText=new TextDecoder('utf-8').decode(buf);
+        }
+        _subCues=parseSRT(srtText);
+        if(_subCues.length){
+          setSubStatus('ok','✅ Loaded from file ('+_subCues.length+' cues)');
+          document.getElementById('manualSubWrap').style.display='none';
+          _subVisible=true;setSubBtn(true);
+        } else throw new Error('0 cues found');
+      }catch(err){setSubStatus('err','❌ '+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  /* ---- PREMIUM GATE ---- */
+  function showPremiumGate(v,s,t){
+    document.getElementById('premiumGateModal').classList.add('open');
+    document.getElementById('premiumGateModal').dataset.v=v;
+    document.getElementById('premiumGateModal').dataset.s=s||'';
+    document.getElementById('premiumGateModal').dataset.t=t||'';
+  }
+  window.closePremiumGate=function(){document.getElementById('premiumGateModal').classList.remove('open');};
+  // Demo: unlock premium (in real app connect to Firebase auth / payment)
+  window.unlockPremiumDemo=function(){
+    window._isPremiumUser=true;
+    const m=document.getElementById('premiumGateModal');
+    m.classList.remove('open');
+    openWatchPlayer(m.dataset.v,m.dataset.s,m.dataset.t,false);
+  };
+
+  /* ---- SUB LOADING ---- */
+  async function loadSubAuto(url,proxyIdx){
+    const st=document.getElementById('subStatusText');
+    // Try direct first, then proxies
+    const fetchUrl=proxyIdx===0?url:PROXIES[proxyIdx-1](url);
+    const label=proxyIdx===0?'direct':`proxy ${proxyIdx}`;
+    st.textContent=`Fetching subtitle (${label})...`;
     try{
-      st.textContent='Fetching subtitles...';
-      const res=await fetch(url);
+      const res=await fetch(fetchUrl,{signal:AbortSignal.timeout(8000)});
       if(!res.ok)throw new Error('HTTP '+res.status);
       const buf=await res.arrayBuffer();
       const bytes=new Uint8Array(buf);
       let srtText='';
-      // ZIP magic bytes PK
       if(bytes[0]===0x50&&bytes[1]===0x4B){
         st.textContent='Extracting ZIP...';
         const zip=await JSZip.loadAsync(buf);
         const f=Object.values(zip.files).find(x=>x.name.toLowerCase().endsWith('.srt')&&!x.dir);
-        if(!f)throw new Error('No SRT inside ZIP');
+        if(!f)throw new Error('No SRT in ZIP');
         srtText=await f.async('string');
       } else {
         srtText=new TextDecoder('utf-8').decode(buf);
       }
       _subCues=parseSRT(srtText);
-      if(_subCues.length){st.textContent='✅ Subtitles loaded ('+_subCues.length+' cues)';ic.style.color='var(--green)';}
-      else throw new Error('0 cues parsed');
+      if(!_subCues.length)throw new Error('0 cues parsed');
+      setSubStatus('ok','✅ Subtitle loaded ('+_subCues.length+' lines)');
+      _subVisible=true;setSubBtn(true);
     }catch(e){
-      st.textContent='❌ '+e.message;
-      ic.style.color='#ff4466';
+      // Try next proxy
+      const nextIdx=proxyIdx+1;
+      if(nextIdx<=PROXIES.length){
+        loadSubAuto(url,nextIdx);
+      } else {
+        // All failed — show manual guide
+        setSubStatus('err','⚠️ Auto-load failed (CORS block)');
+        showManualSubGuide(url);
+      }
     }
   }
 
+  function showManualSubGuide(srtUrl){
+    const wrap=document.getElementById('manualSubWrap');
+    wrap.style.display='block';
+    document.getElementById('manualSubDownloadLink').href=srtUrl||'#';
+    document.getElementById('manualSubDownloadLink').style.display=srtUrl?'inline-flex':'none';
+  }
+
+  /* ---- HELPERS ---- */
+  function setSubStatus(type,msg){
+    const ic=document.getElementById('watchSubStatus').querySelector('i');
+    document.getElementById('subStatusText').textContent=msg;
+    ic.style.color=type==='ok'?'var(--green)':type==='err'?'#ff4466':type==='off'?'var(--gray)':'var(--blue)';
+  }
+  function setSubBtn(on){
+    const btn=document.getElementById('subToggleBtn');
+    btn.className='wctrl-btn'+(on?' sub-on':'');
+    btn.innerHTML='<i class="fas fa-closed-captioning"></i> SUB '+(on?'ON':'OFF');
+  }
+
   function parseSRT(txt){
-    const cues=[];
-    const blocks=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split(/\n\n+/);
+    const cues=[],blocks=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split(/\n\n+/);
     const rx=/(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})/;
     const t=(h,m,s,ms)=>+h*3600+ +m*60+ +s+ +ms/1000;
     blocks.forEach(b=>{
-      const ls=b.trim().split('\n');
-      let i=/^\d+$/.test(ls[0])?1:0;
+      const ls=b.trim().split('\n');let i=/^\d+$/.test(ls[0])?1:0;
       const m=rx.exec(ls[i]);if(!m)return;
       const text=ls.slice(i+1).join('\n').replace(/<[^>]+>/g,'').trim();
       if(text)cues.push({s:t(m[1],m[2],m[3],m[4]),e:t(m[5],m[6],m[7],m[8]),text});
@@ -1267,7 +1428,7 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
       const ct=video.currentTime;
       const active=_subCues.filter(c=>ct>=c.s&&ct<=c.e);
       overlay.innerHTML=active.length?active.map(c=>'<div class="sub-line">'+c.text.replace(/\n/g,'<br>')+'</div>').join(''):'';
-    } else if(overlay){overlay.innerHTML='';}
+    } else if(overlay)overlay.innerHTML='';
     _rafId=requestAnimationFrame(subLoop);
   }
 })();
@@ -1563,9 +1724,17 @@ function showEps(season){
   document.getElementById('epGrid').innerHTML=season.episodes.map(ep=>{
     const hasDl=ep.dlLink&&ep.dlLink.trim();
     const hasSrt=ep.srtLink&&ep.srtLink.trim();
+    const epTitle=ep.title||'Episode '+ep.ep;
+    const safeTitle=epTitle.replace(/'/g,"\\'");
+    const safeLink=(ep.dlLink||'').replace(/'/g,"\\'");
+    const safeSrt=(ep.srtLink||'').replace(/'/g,"\\'");
     return `<div class="ep-card">
-      <div class="ep-head"><div class="ep-n">E${ep.ep}</div><div><div class="ep-t">${ep.title||'Episode '+ep.ep}</div><div class="ep-d">${ep.desc||''}</div></div></div>
+      <div class="ep-head"><div class="ep-n">E${ep.ep}</div><div><div class="ep-t">${epTitle}</div><div class="ep-d">${ep.desc||''}</div></div></div>
       <div class="ep-acts">
+        ${hasDl?`<button class="ep-watch" onclick="openWatchPlayer('${safeLink}','${safeSrt}','${safeTitle}',false)">
+          <div class="ep-watch-icon"><i class="fas fa-play"></i></div>
+          <div class="ep-watch-info"><h5>Watch Online</h5><p>${ep.dlSize||''}${ep.dlSize?' · ':''}E${ep.ep} · Sinhala Sub</p></div>
+        </button>`:''}
         ${hasDl?`<a href="${ep.dlLink}" target="_blank" class="ep-dl" download onclick="if(window._trackDownload)window._trackDownload();">
           <div class="ep-dl-icon"><i class="fas fa-download"></i></div>
           <div class="ep-dl-info"><h5>Download Episode</h5><p>${ep.dlSize||''}${ep.dlSize?' · ':''}E${ep.ep}</p></div>
