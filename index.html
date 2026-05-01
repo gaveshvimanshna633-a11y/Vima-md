@@ -1261,10 +1261,7 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 
   /* ---- PUBLIC API ---- */
   window.openWatchPlayer=function(videoUrl,srtUrl,title,isPremium){
-    // Premium lock check
-    if(isPremium&&!window._isPremiumUser){
-      showPremiumGate(videoUrl,srtUrl,title);return;
-    }
+    if(isPremium&&!window._isPremiumUser){showPremiumGate(videoUrl,srtUrl,title);return;}
     _currentSrtUrl=srtUrl||'';
     document.getElementById('watchMovieTitle').textContent=title||'StreamX';
     document.getElementById('watchSpinner').classList.remove('hide');
@@ -1273,6 +1270,10 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     document.getElementById('manualSubWrap').style.display='none';
     _subCues=[];_subVisible=true;
     setSubBtn(true);
+
+    // Move overlay to body so fullscreen doesn't clip it
+    const overlay=document.getElementById('subOverlay');
+    if(overlay.parentElement!==document.body)document.body.appendChild(overlay);
 
     const video=document.getElementById('watchVideo');
     video.src=videoUrl;video.load();
@@ -1426,27 +1427,34 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     const video=document.getElementById('watchVideo');
     const overlay=document.getElementById('subOverlay');
     if(!video||!overlay)return;
+
+    const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
     const r=video.getBoundingClientRect();
     const vw=r.width, vh=r.height;
-    // Calculate actual rendered video rect inside element (letterbox/pillarbox)
-    const vAspect=video.videoWidth&&video.videoHeight?video.videoWidth/video.videoHeight:16/9;
+
+    // Actual rendered video dimensions (letterbox/pillarbox aware)
+    const vAspect=(video.videoWidth&&video.videoHeight)?(video.videoWidth/video.videoHeight):16/9;
     const eAspect=vw/vh;
     let rendW,rendH,rendX,rendY;
     if(eAspect>vAspect){
-      // pillarbox - black left/right
       rendH=vh; rendW=vh*vAspect;
       rendX=r.left+(vw-rendW)/2; rendY=r.top;
     } else {
-      // letterbox - black top/bottom
       rendW=vw; rendH=vw/vAspect;
       rendX=r.left; rendY=r.top+(vh-rendH)/2;
     }
-    // Place subtitle 8% from bottom of rendered video area
-    const subH=40; // approx subtitle height
+
+    // In fullscreen browser shows native controls ~56px from bottom
+    const controlsH=isFS?56:0;
+    const margin=Math.max(rendH*0.04,8);
+    const subTop=rendY+rendH-controlsH-margin-48;
+
+    overlay.style.position='fixed';
     overlay.style.left=rendX+'px';
     overlay.style.width=rendW+'px';
-    overlay.style.top=(rendY+rendH-subH-Math.max(rendH*0.06,12))+'px';
+    overlay.style.top=Math.max(subTop,rendY)+'px';
     overlay.style.bottom='auto';
+    overlay.style.zIndex='2147483647';
   }
 
   function subLoop(){
@@ -2152,4 +2160,4 @@ async function saveEdit(){
 }
 </script>
 </body>
-    </html>
+  </html>
