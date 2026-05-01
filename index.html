@@ -1185,17 +1185,18 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 /* Watch player modal base */
 .watch-modal{display:none;position:fixed;inset:0;background:#000;z-index:9000;flex-direction:column;}
 .watch-modal.open{display:flex;}
-.watch-top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(10,10,10,0.98);border-bottom:1px solid rgba(229,9,20,0.2);flex-shrink:0;}
+.watch-top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(10,10,10,0.98);border-bottom:1px solid rgba(229,9,20,0.2);flex-shrink:0;height:48px;box-sizing:border-box;}
 .watch-title-bar{display:flex;align-items:center;gap:12px;overflow:hidden;}
 .watch-badge{background:var(--red);color:#fff;font-family:'Bebas Neue',cursive;font-size:11px;letter-spacing:2px;padding:3px 10px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
 .watch-movie-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .watch-close-btn{background:rgba(255,255,255,0.08);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
 .watch-close-btn:hover{background:var(--red);}
-.watch-body{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.watch-video-wrap{flex:1;position:relative;background:#000;display:flex;align-items:center;justify-content:center;min-height:0;}
-.watch-video{width:100%;height:100%;max-height:calc(100vh - 110px);object-fit:contain;display:block;}
-.sub-overlay{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:90%;text-align:center;pointer-events:none;z-index:10;}
-.sub-line{display:inline-block;background:rgba(0,0,0,0.85);color:#fff;font-size:clamp(14px,2.2vw,22px);font-family:'Poppins',sans-serif;font-weight:600;padding:4px 14px;border-radius:5px;line-height:1.5;margin:2px 0;max-width:100%;word-break:break-word;text-shadow:0 2px 8px rgba(0,0,0,0.9);}
+.watch-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.watch-video-wrap{flex:1;position:relative;background:#000;min-height:0;overflow:hidden;}
+.watch-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;}
+.sub-overlay{position:fixed;pointer-events:none;z-index:9100;text-align:center;left:0;right:0;}
+.sub-line{display:inline-block;background:rgba(0,0,0,0.88);color:#fff;font-size:clamp(14px,2.4vw,22px);font-family:'Poppins',sans-serif;font-weight:700;padding:5px 16px;border-radius:6px;line-height:1.55;margin:2px 0;max-width:92vw;word-break:break-word;text-shadow:0 2px 10px rgba(0,0,0,1);}
+@media(max-width:600px){.sub-line{font-size:clamp(13px,4vw,17px);padding:4px 10px;}}
 .watch-spinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,0.75);}
 .watch-spinner p{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:3px;color:rgba(255,255,255,0.4);}
 .watch-spinner.hide{display:none;}
@@ -1421,9 +1422,22 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     return cues;
   }
 
+  function positionSubOverlay(){
+    const video=document.getElementById('watchVideo');
+    const overlay=document.getElementById('subOverlay');
+    if(!video||!overlay)return;
+    const r=video.getBoundingClientRect();
+    // Place subtitle near bottom of actual video rect, above browser controls (~50px)
+    const subBottom=window.innerHeight-r.bottom+50;
+    overlay.style.bottom=Math.max(subBottom,10)+'px';
+    overlay.style.left=r.left+'px';
+    overlay.style.width=r.width+'px';
+  }
+
   function subLoop(){
     const video=document.getElementById('watchVideo');
     const overlay=document.getElementById('subOverlay');
+    positionSubOverlay();
     if(video&&overlay&&_subVisible&&_subCues.length){
       const ct=video.currentTime;
       const active=_subCues.filter(c=>ct>=c.s&&ct<=c.e);
