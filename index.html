@@ -9,8 +9,9 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, remove, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
   const cfg={apiKey:"AIzaSyBkSdYjHaIaaB5OTpXcv0PArP4mmgo23Sk",authDomain:"sutable-99848.firebaseapp.com",databaseURL:"https://sutable-99848-default-rtdb.firebaseio.com",projectId:"sutable-99848",storageBucket:"sutable-99848.firebasestorage.app",messagingSenderId:"218395856479",appId:"1:218395856479:web:7fc33779c10b8182e795ea"};
-  const app=initializeApp(cfg),db=getDatabase(app);
+  const app=initializeApp(cfg),db=getDatabase(app),storage=getStorage(app);
   window._fbReady=false;
   onValue(ref(db,'content'),(snap)=>{
     const d=snap.val();
@@ -34,6 +35,55 @@
   window._listenComments=(cid,cb)=>{onValue(ref(db,'comments/'+cid),(snap)=>{const d=snap.val();cb(d?Object.entries(d).map(([k,v])=>({...v,key:k})).sort((a,b)=>(b.ts||0)-(a.ts||0)):[]); });};
   window._addComment=async(cid,text,name)=>{await set(push(ref(db,'comments/'+cid)),{text,name:name||'Anonymous',ts:Date.now()});};
   window._delComment=async(cid,key)=>{await remove(ref(db,'comments/'+cid+'/'+key));};
+
+  /* ===== SRT → VTT CONVERTER ===== */
+  function srtToVtt(srt){
+    return 'WEBVTT\n\n' + srt
+      .replace(/\r\n/g,'\n').replace(/\r/g,'\n')
+      .replace(/(\d{2}):(\d{2}):(\d{2}),(\d{3})/g,'$1:$2:$3.$4')
+      .replace(/^\d+$/gm,'')
+      .trim();
+  }
+
+  /* ===== SUBTITLE FILE UPLOAD TO FIREBASE STORAGE ===== */
+  window._uploadSubtitle = async function(file, onProgress){
+    return new Promise((resolve, reject)=>{
+      const isSrt = file.name.toLowerCase().endsWith('.srt');
+      const isVtt = file.name.toLowerCase().endsWith('.vtt');
+      if(!isSrt && !isVtt){ reject(new Error('Only .vtt or .srt files!')); return; }
+
+      const reader = new FileReader();
+      reader.onload = async(e)=>{
+        try{
+          let content = e.target.result;
+          let finalName = file.name;
+          if(isSrt){
+            content = srtToVtt(content);
+            finalName = file.name.replace(/\.srt$/i, '.vtt');
+          }
+          const blob = new Blob([content], {type:'text/vtt'});
+          const storagePath = `subtitles/${Date.now()}_${finalName}`;
+          const storRef = sRef(storage, storagePath);
+          const task = uploadBytesResumable(storRef, blob, {contentType:'text/vtt'});
+          task.on('state_changed',
+            (snap)=>{ const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100); onProgress&&onProgress(pct,'Uploading...'); },
+            (err)=>reject(err),
+            async()=>{
+              const url = await getDownloadURL(task.snapshot.ref);
+              resolve({url, storagePath, originalName: file.name, converted: isSrt});
+            }
+          );
+        }catch(err){ reject(err); }
+      };
+      reader.onerror = ()=>reject(new Error('File read failed'));
+      reader.readAsText(file,'UTF-8');
+    });
+  };
+
+  window._deleteSubtitle = async function(storagePath){
+    if(!storagePath)return;
+    try{ await deleteObject(sRef(storage, storagePath)); }catch(e){ console.warn('Sub delete:', e.message); }
+  };
 </script>
 <style>
 :root{
@@ -430,6 +480,28 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 .fb-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,0.06);border:1px solid rgba(34,197,94,0.2);color:#22c55e;padding:3px 9px;border-radius:4px;font-size:10px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:1px;margin-top:9px;}
 
 .page{display:none;}.page.active{display:block;}
+
+/* SUBTITLE DRAG & DROP ZONE */
+.sub-drag-zone{border:2px dashed rgba(245,197,24,0.35);border-radius:10px;padding:26px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:rgba(245,197,24,0.02);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:95px;}
+.sub-drag-zone:hover,.sub-drag-zone.sub-dragging{border-color:var(--gold);background:rgba(245,197,24,0.06);}
+.sub-drag-zone i{font-size:28px;color:var(--gold);opacity:0.6;}
+.sub-drag-zone p{font-size:13px;color:var(--gray);margin:0;}
+.sub-drag-zone p strong{color:var(--gold);}
+.sub-drag-zone>span{font-size:11px;color:rgba(245,197,24,0.45);font-family:'Rajdhani',sans-serif;}
+.sub-upload-progress{margin-top:9px;background:rgba(245,197,24,0.04);border:1px solid rgba(245,197,24,0.14);border-radius:8px;padding:12px 14px;}
+.sup-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:7px;}
+.sup-bar{height:100%;background:linear-gradient(90deg,var(--gold),#ffd700);border-radius:2px;width:0%;transition:width 0.3s;}
+.sup-info{font-size:12px;color:rgba(245,197,24,0.65);font-family:'Rajdhani',sans-serif;letter-spacing:1px;display:flex;align-items:center;gap:7px;}
+.sup-info .fa-spinner{animation:spin 1s linear infinite;}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.sub-upload-result{margin-top:9px;background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.18);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:9px;}
+.sub-upload-result>span{font-size:12px;color:#22c55e;font-family:'Rajdhani',sans-serif;font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* edit sub drag zone */
+.edit-sub-dz{border:2px dashed rgba(245,197,24,0.28);border-radius:9px;padding:18px;text-align:center;cursor:pointer;transition:all 0.2s;background:rgba(245,197,24,0.015);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:75px;justify-content:center;}
+.edit-sub-dz:hover,.edit-sub-dz.sub-dragging{border-color:var(--gold);background:rgba(245,197,24,0.05);}
+.edit-sub-dz i{font-size:20px;color:var(--gold);opacity:0.55;}
+.edit-sub-dz p{font-size:12px;color:var(--gray);margin:0;}
+.edit-sub-dz span{font-size:10px;color:rgba(245,197,24,0.4);font-family:'Rajdhani',sans-serif;}
 
 /* ADMIN */
 #admin-page{min-height:100vh;padding:78px 26px 55px;}
@@ -881,17 +953,42 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
             </div>
           </div>
 
-          <!-- SUBTITLE — with stream subtitle link -->
+          <!-- SUBTITLE — Drag & Drop .vtt/.srt upload to Firebase Storage -->
           <div class="fg">
-            <label>🇱🇰 Sinhala Subtitle (.srt / .vtt Link)</label>
-            <div style="background:rgba(245,197,24,0.04);border:1px solid rgba(245,197,24,0.14);border-radius:8px;padding:11px 13px;margin-bottom:8px;font-size:11px;color:rgba(245,197,24,0.65);">
+            <label>🇱🇰 Sinhala Subtitle File (.vtt or .srt) — Firebase Storage Upload</label>
+            <div style="background:rgba(245,197,24,0.04);border:1px solid rgba(245,197,24,0.12);border-radius:8px;padding:10px 13px;margin-bottom:9px;font-size:11px;color:rgba(245,197,24,0.6);line-height:1.6;">
               <i class="fas fa-info-circle" style="margin-right:5px;"></i>
-              .vtt link දෙන්නෙකෝ — online player එකේ auto subtitle enable වෙනවා. .srt link දෙන්නෙකෝ download button show වෙනවා.
+              <strong>.vtt file</strong> — online player එකේ auto subtitle enable වෙනවා. <strong>.srt file</strong> — auto convert to .vtt කරලා upload වෙනවා. File Firebase Storage eke save වෙනවා.
             </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <input type="text" id="fSub" placeholder="Paste subtitle .vtt or .srt link..." style="flex:1;">
-              <span style="font-size:11px;background:rgba(245,197,24,0.08);border:1px solid rgba(245,197,24,0.22);color:var(--gold);padding:9px 11px;border-radius:6px;white-space:nowrap;font-family:'Rajdhani',sans-serif;font-weight:700;">🇱🇰 SI</span>
+            <!-- Drag & Drop Zone -->
+            <div class="sub-drag-zone" id="subDragZone"
+              ondragover="event.preventDefault();this.classList.add('sub-dragging')"
+              ondragleave="this.classList.remove('sub-dragging')"
+              ondrop="handleSubDrop(event)">
+              <i class="fas fa-closed-captioning"></i>
+              <p>Drag & drop <strong>.vtt</strong> or <strong>.srt</strong> subtitle file here</p>
+              <span>or click to browse</span>
+              <input type="file" id="subFileInput" accept=".vtt,.srt,text/vtt,text/plain" onchange="handleSubFileSelect(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
             </div>
+            <!-- Upload Progress -->
+            <div class="sub-upload-progress" id="subUploadProgress" style="display:none;">
+              <div class="sup-bar-wrap"><div class="sup-bar" id="supBar"></div></div>
+              <div class="sup-info" id="supInfo">Uploading... 0%</div>
+            </div>
+            <!-- Upload Result -->
+            <div class="sub-upload-result" id="subUploadResult" style="display:none;">
+              <i class="fas fa-check-circle" style="color:#22c55e;"></i>
+              <span id="subUploadName">subtitle.vtt</span>
+              <button onclick="clearSubUpload()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;margin-left:auto;"><i class="fas fa-times"></i></button>
+            </div>
+            <!-- Or paste URL -->
+            <div style="margin-top:8px;display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:var(--gray);font-family:'Rajdhani',sans-serif;white-space:nowrap;">OR URL:</span>
+              <input type="text" id="fSub" placeholder="Paste .vtt / .srt link (Drive, GitHub, etc.)..." style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:8px 11px;color:#fff;font-size:12px;outline:none;">
+            </div>
+            <!-- Hidden field to store final URL -->
+            <input type="hidden" id="fSubUrl">
+            <input type="hidden" id="fSubStoragePath">
           </div>
           <div class="fg"><label>Trailer URL (YouTube Embed)</label><input type="text" id="fTrailer" placeholder="https://www.youtube.com/embed/..."></div>
 
@@ -1367,20 +1464,110 @@ async function submitContent(){
   if(!title){showToast('Title danna!');return;}
   const badges=Object.keys(activeBadges).filter(k=>activeBadges[k]);
   const cast=[];document.querySelectorAll('#castBuilder .cast-row-a').forEach(row=>{const name=row.querySelector('.c-name')?.value.trim();if(name)cast.push({name,role:row.querySelector('.c-role')?.value.trim()||'',photo:row.querySelector('.c-photo')?.value.trim()||''});});
-  const item={id:Date.now(),type,title,category:document.getElementById('fCat').value,year:parseInt(document.getElementById('fYear').value)||new Date().getFullYear(),rating:parseFloat(document.getElementById('fRating').value)||7.0,duration:document.getElementById('fDuration').value.trim()||'',thumb:document.getElementById('fThumb').value.trim()||`https://via.placeholder.com/200x300/1a1a1a/333?text=${encodeURIComponent(title)}`,banner:document.getElementById('fBanner').value.trim()||'',desc:document.getElementById('fDesc').value.trim()||'',writer:document.getElementById('fWriter').value.trim()||'',customText:document.getElementById('fCustomText').value.trim()||'',subtitle:document.getElementById('fSub').value.trim()||'',trailer:document.getElementById('fTrailer').value.trim()||'',badges,seasonNum:document.getElementById('fSeasonNum').value.trim(),cast,isAdult:isAdult18};
+
+  // Get subtitle URL: prefer uploaded, then typed URL
+  const uploadedSubUrl=document.getElementById('fSubUrl')?.value.trim()||'';
+  const typedSubUrl=document.getElementById('fSub')?.value.trim()||'';
+  const finalSubUrl=uploadedSubUrl||typedSubUrl;
+  const finalSubPath=document.getElementById('fSubStoragePath')?.value.trim()||'';
+
+  const item={id:Date.now(),type,title,category:document.getElementById('fCat').value,year:parseInt(document.getElementById('fYear').value)||new Date().getFullYear(),rating:parseFloat(document.getElementById('fRating').value)||7.0,duration:document.getElementById('fDuration').value.trim()||'',thumb:document.getElementById('fThumb').value.trim()||`https://via.placeholder.com/200x300/1a1a1a/333?text=${encodeURIComponent(title)}`,banner:document.getElementById('fBanner').value.trim()||'',desc:document.getElementById('fDesc').value.trim()||'',writer:document.getElementById('fWriter').value.trim()||'',customText:document.getElementById('fCustomText').value.trim()||'',subtitle:finalSubUrl,subtitleStoragePath:finalSubPath,trailer:document.getElementById('fTrailer').value.trim()||'',badges,seasonNum:document.getElementById('fSeasonNum').value.trim(),cast,isAdult:isAdult18};
   if(type==='movie'){item.links={p480:v('s480'),p720:v('s720'),p1080:v('s1080')};item.downloads={d480:v('d480'),d720:v('d720'),d1080:v('d1080')};}
   else{const n=parseInt(document.getElementById('fSeasons').value)||0;item.seasons=[];for(let s=1;s<=n;s++){const rows=document.querySelectorAll(`#epR_${s} .ep-row-a`),eps=[];rows.forEach(row=>eps.push({ep:parseInt(row.querySelector('.en')?.value)||eps.length+1,title:row.querySelector('.et')?.value||'',link:row.querySelector('.el')?.value||'',dlLink:row.querySelector('.edl')?.value||'',desc:''}));item.seasons.push({num:s,episodes:eps});}}
   if(window._fbSave){try{await window._fbSave(item);showToast('"'+title+'" published! 🔥','success');}catch(e){showToast('Failed: '+e.message);}}
   else{window.allContent.unshift(item);showToast('"'+title+'" saved!','success');initHome();updateStats();}
-  ['fTitle','fYear','fRating','fDuration','fThumb','fBanner','fDesc','fWriter','fCustomText','fSub','fTrailer','fSeasonNum','s480','s720','s1080','d480','d720','d1080'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['fTitle','fYear','fRating','fDuration','fThumb','fBanner','fDesc','fWriter','fCustomText','fSub','fSubUrl','fSubStoragePath','fTrailer','fSeasonNum','s480','s720','s1080','d480','d720','d1080'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['thumbPreview','bannerPreview'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('show');});
   document.getElementById('seasonBuilder').innerHTML='';document.getElementById('castBuilder').innerHTML='';
   Object.keys(activeBadges).forEach(k=>activeBadges[k]=false);document.querySelectorAll('.badge-toggle').forEach(b=>b.classList.remove('on'));
   isAdult18=false;document.getElementById('adultToggle').classList.remove('on');
+  // Reset subtitle upload
+  clearSubUpload();
 }
 function v(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 
-function fManage(f,btn){mFilter=f;if(btn){document.querySelectorAll('#manageTab .admin-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}renderManageList();}
+/* ===== SUBTITLE FILE DRAG & DROP UPLOAD ===== */
+let subUploadedUrl='', subUploadedPath='';
+
+function handleSubDrop(e){
+  e.preventDefault();e.stopPropagation();
+  document.getElementById('subDragZone').classList.remove('sub-dragging');
+  const file=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.vtt')||f.name.endsWith('.srt'));
+  if(file)uploadSubtitleFile(file);
+  else showToast('.vtt or .srt file drop කරන්න!');
+}
+function handleSubFileSelect(inp){
+  const file=inp.files[0];if(file)uploadSubtitleFile(file);
+}
+async function uploadSubtitleFile(file){
+  if(!window._uploadSubtitle){showToast('Firebase not connected!');return;}
+  const isSrt=file.name.endsWith('.srt');
+  // Show progress
+  document.getElementById('subUploadProgress').style.display='block';
+  document.getElementById('subUploadResult').style.display='none';
+  document.getElementById('supInfo').innerHTML=`<i class="fas fa-spinner"></i> ${isSrt?'Converting SRT → VTT...':'Uploading VTT...'}`;
+  document.getElementById('supBar').style.width='0%';
+  try{
+    const result=await window._uploadSubtitle(file,(pct,msg)=>{
+      document.getElementById('supBar').style.width=pct+'%';
+      document.getElementById('supInfo').innerHTML=`<i class="fas fa-spinner"></i> ${msg||'Uploading...'} ${pct}%`;
+    });
+    subUploadedUrl=result.url;
+    subUploadedPath=result.storagePath;
+    document.getElementById('fSubUrl').value=result.url;
+    document.getElementById('fSubStoragePath').value=result.storagePath;
+    // Show result
+    document.getElementById('subUploadProgress').style.display='none';
+    document.getElementById('subUploadResult').style.display='flex';
+    document.getElementById('subUploadName').textContent=`✅ ${result.originalName}${result.converted?' (converted to VTT)':''} — Uploaded!`;
+    document.getElementById('subDragZone').style.borderColor='#22c55e';
+    showToast('Subtitle uploaded! 🇱🇰','success');
+  }catch(err){
+    document.getElementById('subUploadProgress').style.display='none';
+    document.getElementById('supInfo').textContent='Upload failed: '+err.message;
+    showToast('Upload failed: '+err.message);
+  }
+}
+function clearSubUpload(){
+  subUploadedUrl='';subUploadedPath='';
+  document.getElementById('fSubUrl').value='';
+  document.getElementById('fSubStoragePath').value='';
+  document.getElementById('subUploadResult').style.display='none';
+  document.getElementById('subDragZone').style.borderColor='';
+  document.getElementById('subFileInput').value='';
+}
+
+/* ===== EDIT MODAL SUBTITLE UPLOAD ===== */
+let editSubUploadedUrl='', editSubUploadedPath='';
+
+function handleEditSubDrop(e, resultId, nameId, zoneId){
+  e.preventDefault();e.stopPropagation();
+  document.getElementById(zoneId).classList.remove('sub-dragging');
+  const file=Array.from(e.dataTransfer.files).find(f=>f.name.endsWith('.vtt')||f.name.endsWith('.srt'));
+  if(file)uploadEditSubtitle(file,resultId,nameId);
+  else showToast('.vtt or .srt file drop කරන්න!');
+}
+function handleEditSubFile(inp,resultId,nameId,zoneId){
+  const file=inp.files[0];if(file)uploadEditSubtitle(file,resultId,nameId);
+}
+async function uploadEditSubtitle(file,resultId,nameId){
+  if(!window._uploadSubtitle){showToast('Firebase not connected!');return;}
+  const resEl=document.getElementById(resultId),nameEl=document.getElementById(nameId);
+  if(resEl){resEl.style.display='flex';resEl.style.background='rgba(245,197,24,0.05)';}
+  if(nameEl)nameEl.textContent='Uploading...';
+  try{
+    const result=await window._uploadSubtitle(file,(pct)=>{if(nameEl)nameEl.textContent=`Uploading... ${pct}%`;});
+    editSubUploadedUrl=result.url;editSubUploadedPath=result.storagePath;
+    document.getElementById('e_subtitle').value=result.url;
+    document.getElementById('e_subtitleStoragePath').value=result.storagePath;
+    if(nameEl)nameEl.textContent=`✅ ${result.originalName}${result.converted?' → VTT':''} uploaded!`;
+    if(resEl)resEl.style.background='rgba(34,197,94,0.05)';
+    showToast('Subtitle uploaded! 🇱🇰','success');
+  }catch(err){
+    if(nameEl)nameEl.textContent='Failed: '+err.message;
+    showToast('Upload failed: '+err.message);
+  }
+}(f,btn){mFilter=f;if(btn){document.querySelectorAll('#manageTab .admin-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}renderManageList();}
 function renderManageList(){
   let items=[...(window.allContent||[])].sort((a,b)=>Number(b.id||0)-Number(a.id||0));
   if(mFilter==='adult')items=items.filter(c=>c.isAdult);else if(mFilter!=='all')items=items.filter(c=>c.type===mFilter);
@@ -1425,7 +1612,25 @@ function openEdit(id,fbKey){
     ${ta('desc','Description',item.desc)}
     ${f('Writer','writer',item.writer)}
     <div class="fg"><label>📝 Custom Info Text</label><textarea id="e_customText" style="min-height:65px;">${item.customText||''}</textarea></div>
-    ${f('Subtitle Link (.vtt for auto, .srt for download)','subtitle',item.subtitle)}
+    <div class="fg">
+      <label>🇱🇰 Subtitle — Drag & Drop .vtt/.srt OR paste URL</label>
+      <div class="edit-sub-dz" id="eSubDz"
+        ondragover="event.preventDefault();this.classList.add('sub-dragging')"
+        ondragleave="this.classList.remove('sub-dragging')"
+        ondrop="handleEditSubDrop(event,'eSubResult','eSubName','eSubDz')">
+        <i class="fas fa-closed-captioning"></i>
+        <p>Drop <strong style="color:var(--gold);">.vtt</strong> or <strong style="color:var(--gold);">.srt</strong> file here</p>
+        <span>or click to browse</span>
+        <input type="file" accept=".vtt,.srt" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="handleEditSubFile(this,'eSubResult','eSubName','eSubDz')">
+      </div>
+      <div id="eSubResult" style="margin-top:7px;background:rgba(245,197,24,0.04);border:1px solid rgba(245,197,24,0.14);border-radius:7px;padding:9px 12px;align-items:center;gap:8px;display:${item.subtitle?'flex':'none'};">
+        <i class="fas fa-closed-captioning" style="color:var(--gold);font-size:13px;"></i>
+        <span id="eSubName" style="font-size:11px;color:rgba(245,197,24,0.7);font-family:'Rajdhani',sans-serif;flex:1;">${item.subtitle?'Current subtitle loaded':'No subtitle'}</span>
+      </div>
+      <input type="hidden" id="e_subtitle" value="${(item.subtitle||'').replace(/"/g,'&quot;')}">
+      <input type="hidden" id="e_subtitleStoragePath" value="${(item.subtitleStoragePath||'').replace(/"/g,'&quot;')}">
+      <input type="text" class="url-alt" placeholder="Or paste .vtt / .srt URL..." style="margin-top:7px;" oninput="document.getElementById('e_subtitle').value=this.value" value="${item.subtitle&&!item.subtitleStoragePath?item.subtitle.replace(/"/g,'&quot;'):''}">
+    </div>
     ${f('Trailer URL','trailer',item.trailer)}
     ${f('Season Number (badge)','seasonNum',item.seasonNum,'text','e.g. 5')}
     <div class="fg"><label>🏷 Badges</label><div class="badge-builder" id="eBadgeBuilder">${bdgHtml}</div></div>
@@ -1471,4 +1676,4 @@ async function saveEdit(){
 }
 </script>
 </body>
-   </html>
+  </html>
