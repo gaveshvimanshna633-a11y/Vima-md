@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, remove, onValue, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, set, remove, onValue, push, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getStorage, ref as sRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
   const cfg={apiKey:"AIzaSyBkSdYjHaIaaB5OTpXcv0PArP4mmgo23Sk",authDomain:"sutable-99848.firebaseapp.com",databaseURL:"https://sutable-99848-default-rtdb.firebaseio.com",projectId:"sutable-99848",storageBucket:"sutable-99848.firebasestorage.app",messagingSenderId:"218395856479",appId:"1:218395856479:web:7fc33779c10b8182e795ea"};
   const app=initializeApp(cfg),db=getDatabase(app),storage=getStorage(app);
@@ -83,6 +83,45 @@
   window._deleteSubtitle = async function(storagePath){
     if(!storagePath)return;
     try{ await deleteObject(sRef(storage, storagePath)); }catch(e){ console.warn('Sub delete:', e.message); }
+  };
+
+  /* ===== ANALYTICS — Visitors & Downloads ===== */
+  // Track visitor on page load
+  (async function trackVisitor(){
+    try{
+      const today = new Date().toISOString().slice(0,10);
+      const sessionKey = 'sx_visited_' + today;
+      const isNewToday = !sessionStorage.getItem(sessionKey);
+      if(isNewToday){
+        sessionStorage.setItem(sessionKey,'1');
+        const todayRef = ref(db,'analytics/visitors/daily/'+today);
+        const totalRef = ref(db,'analytics/visitors/total');
+        const [ts,tt] = await Promise.all([get(todayRef),get(totalRef)]);
+        await Promise.all([set(todayRef,(ts.val()||0)+1), set(totalRef,(tt.val()||0)+1)]);
+      }
+    }catch(e){ console.warn('Visitor track err:',e); }
+  })();
+
+  // Track a download click
+  window._trackDownload = async function(){
+    try{
+      const today = new Date().toISOString().slice(0,10);
+      const todayRef = ref(db,'analytics/downloads/daily/'+today);
+      const totalRef = ref(db,'analytics/downloads/total');
+      const [ts,tt] = await Promise.all([get(todayRef),get(totalRef)]);
+      await Promise.all([set(todayRef,(ts.val()||0)+1), set(totalRef,(tt.val()||0)+1)]);
+    }catch(e){ console.warn('Download track err:',e); }
+  };
+
+  // Listen to analytics for admin panel (real-time)
+  window._listenAnalytics = function(cb){
+    const today = new Date().toISOString().slice(0,10);
+    let data = {todayVisitors:0, totalVisitors:0, todayDownloads:0, totalDownloads:0};
+    function notify(){ cb(Object.assign({},data)); }
+    onValue(ref(db,'analytics/visitors/daily/'+today), snap=>{ data.todayVisitors=snap.val()||0; notify(); });
+    onValue(ref(db,'analytics/visitors/total'), snap=>{ data.totalVisitors=snap.val()||0; notify(); });
+    onValue(ref(db,'analytics/downloads/daily/'+today), snap=>{ data.todayDownloads=snap.val()||0; notify(); });
+    onValue(ref(db,'analytics/downloads/total'), snap=>{ data.totalDownloads=snap.val()||0; notify(); });
   };
 </script>
 <style>
@@ -321,7 +360,30 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 .dt-alert.danger i{color:#ff4466;}
 .dt-alert p{font-size:11px;color:rgba(255,255,255,0.42);line-height:1.65;margin:0;}
 
-/* WATCH CARD */
+/* ANALYTICS STATS */
+.analytics-section{margin-bottom:18px;}
+.analytics-title{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.25);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.analytics-title::before{content:'';display:block;width:18px;height:2px;background:var(--blue);border-radius:1px;}
+.analytics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;}
+.an-card{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(59,130,246,0.03));border:1px solid rgba(59,130,246,0.18);border-radius:12px;padding:14px 13px;text-align:center;position:relative;overflow:hidden;transition:all 0.2s;}
+.an-card:hover{border-color:rgba(59,130,246,0.38);transform:translateY(-2px);}
+.an-card.green{background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(34,197,94,0.03));border-color:rgba(34,197,94,0.18);}
+.an-card.green:hover{border-color:rgba(34,197,94,0.38);}
+.an-card.gold{background:linear-gradient(135deg,rgba(245,197,24,0.08),rgba(245,197,24,0.03));border-color:rgba(245,197,24,0.18);}
+.an-card.gold:hover{border-color:rgba(245,197,24,0.38);}
+.an-card.purple{background:linear-gradient(135deg,rgba(168,85,247,0.08),rgba(168,85,247,0.03));border-color:rgba(168,85,247,0.18);}
+.an-card.purple:hover{border-color:rgba(168,85,247,0.38);}
+.an-icon{font-size:20px;margin-bottom:6px;}
+.an-num{font-family:'Bebas Neue',cursive;font-size:32px;letter-spacing:2px;line-height:1;margin-bottom:3px;}
+.an-card .an-num{color:var(--blue);}
+.an-card.green .an-num{color:var(--green);}
+.an-card.gold .an-num{color:var(--gold);}
+.an-card.purple .an-num{color:var(--purple);}
+.an-label{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.35);text-transform:uppercase;}
+.an-live{position:absolute;top:8px;right:9px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.3);border-radius:4px;font-size:8px;color:#22c55e;padding:2px 5px;font-family:'Rajdhani',sans-serif;letter-spacing:1px;display:flex;align-items:center;gap:3px;}
+.an-live-dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:pulse-dot 1.5s infinite;}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.3}}
+@media(max-width:600px){.analytics-row{grid-template-columns:repeat(2,1fr);}}
 .watch-card{background:var(--dark2);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:20px;margin:16px 0 12px;}
 .watch-card-title{font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.28);margin-bottom:16px;display:flex;align-items:center;gap:8px;text-transform:uppercase;}
 .watch-card-title::before{content:'';display:block;width:20px;height:2px;background:var(--red);border-radius:1px;}
@@ -879,6 +941,34 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
         <div class="stat-c"><div class="sn" id="sTotal">0</div><div class="sl">Total</div></div>
         <div class="stat-c"><div class="sn" id="s18" style="color:#ff4466;">0</div><div class="sl">18+ Content</div></div>
       </div>
+
+      <!-- ANALYTICS SECTION -->
+      <div class="analytics-section">
+        <div class="analytics-title">Live Analytics</div>
+        <div class="analytics-row">
+          <div class="an-card">
+            <div class="an-live"><div class="an-live-dot"></div>LIVE</div>
+            <div class="an-icon">👁️</div>
+            <div class="an-num" id="anTodayV">—</div>
+            <div class="an-label">Today Visitors</div>
+          </div>
+          <div class="an-card green">
+            <div class="an-icon">⬇️</div>
+            <div class="an-num" id="anTodayD">—</div>
+            <div class="an-label">Today Downloads</div>
+          </div>
+          <div class="an-card gold">
+            <div class="an-icon">🌍</div>
+            <div class="an-num" id="anTotalV">—</div>
+            <div class="an-label">All Visitors</div>
+          </div>
+          <div class="an-card purple">
+            <div class="an-icon">📥</div>
+            <div class="an-num" id="anTotalD">—</div>
+            <div class="an-label">All Downloads</div>
+          </div>
+        </div>
+      </div>
       <div class="admin-tabs">
         <div class="admin-tab active" id="tabAdd" onclick="switchTab('add')">ADD CONTENT</div>
         <div class="admin-tab" id="tabManage" onclick="switchTab('manage')">MANAGE</div>
@@ -1273,7 +1363,7 @@ function renderDetail(){
   const dl=c.downloads||{};
   const dlItems=[{l:'480p',k:'d480',ic:'fa-file-video'},{l:'720p HD',k:'d720',ic:'fa-film'},{l:'1080p FHD',k:'d1080',ic:'fa-star'}].filter(d=>dl[d.k]&&dl[d.k].trim());
   const dlC=document.getElementById('dlCard');
-  if(dlItems.length){dlC.style.display='block';document.getElementById('dlBtns').innerHTML=dlItems.map(d=>`<a href="${dl[d.k]}" target="_blank" class="dl-btn" download><i class="fas ${d.ic}"></i> Download ${d.l}</a>`).join('');}else dlC.style.display='none';
+  if(dlItems.length){dlC.style.display='block';document.getElementById('dlBtns').innerHTML=dlItems.map(d=>`<a href="${dl[d.k]}" target="_blank" class="dl-btn" download onclick="window._trackDownload&&window._trackDownload()"><i class="fas ${d.ic}"></i> Download ${d.l}</a>`).join('');}else dlC.style.display='none';
 
   // CAST
   const castSec=document.getElementById('castSection');
@@ -1311,7 +1401,7 @@ function showEps(season){
     return`<div class="ep-card"><div class="ep-head"><div class="ep-n">E${ep.ep}</div><div><div class="ep-t">${ep.title||'Episode '+ep.ep}</div><div class="ep-d">${ep.desc||''}</div></div></div>
     <div class="ep-acts">
       <button class="ep-watch" onclick="openEpPlayer('${ep.link||''}','${t}')"><i class="fas fa-play"></i> WATCH</button>
-      ${hasDl?`<a href="${ep.dlLink}" target="_blank" class="ep-dl" download><i class="fas fa-download"></i> DL</a>`:''}
+      ${hasDl?`<a href="${ep.dlLink}" target="_blank" class="ep-dl" download onclick="window._trackDownload&&window._trackDownload()"><i class="fas fa-download"></i> DL</a>`:''}
       ${hasLink?`<a href="vlc://${ep.link}" class="ep-vlc"><i class="fas fa-play-circle"></i> VLC</a>`:''}
     </div></div>`;}).join('');}
 
@@ -1401,7 +1491,18 @@ function closePlayer(){document.getElementById('playerModal').classList.remove('
 function initAdmin(){if(adminLoggedIn)showDash();else{document.getElementById('adminLogin').style.display='block';document.getElementById('adminDash').classList.remove('visible');}}
 function doLogin(){if(document.getElementById('adminPw').value==='vimamd'){adminLoggedIn=true;document.getElementById('adminLogin').style.display='none';showDash();showToast('Welcome! Firebase Live 🔥','success');}else{showToast('Wrong password!');document.getElementById('adminPw').style.borderColor='var(--red)';setTimeout(()=>document.getElementById('adminPw').style.borderColor='',1500);}}
 function doLogout(){adminLoggedIn=false;showPage('home');}
-function showDash(){document.getElementById('adminDash').classList.add('visible');updateStats();renderManageList();}
+function showDash(){document.getElementById('adminDash').classList.add('visible');updateStats();renderManageList();loadAnalytics();}
+function loadAnalytics(){
+  if(!window._listenAnalytics)return;
+  window._listenAnalytics(function(d){
+    const fmt=n=>n>=1000000?(n/1000000).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'K':String(n);
+    const el=id=>document.getElementById(id);
+    if(el('anTodayV'))el('anTodayV').textContent=fmt(d.todayVisitors);
+    if(el('anTodayD'))el('anTodayD').textContent=fmt(d.todayDownloads);
+    if(el('anTotalV'))el('anTotalV').textContent=fmt(d.totalVisitors);
+    if(el('anTotalD'))el('anTotalD').textContent=fmt(d.totalDownloads);
+  });
+}
 function updateStats(){const m=(window.allContent||[]).filter(c=>c.type==='movie').length,t=(window.allContent||[]).filter(c=>c.type==='tvseries').length,a=(window.allContent||[]).filter(c=>c.isAdult).length;document.getElementById('sMovies').textContent=m;document.getElementById('sTV').textContent=t;document.getElementById('sTotal').textContent=m+t;document.getElementById('s18').textContent=a;}
 function switchTab(tab){document.getElementById('tabAdd').classList.toggle('active',tab==='add');document.getElementById('tabManage').classList.toggle('active',tab==='manage');document.getElementById('addTab').style.display=tab==='add'?'block':'none';document.getElementById('manageTab').style.display=tab==='manage'?'block':'none';if(tab==='manage')renderManageList();}
 function toggleType(){const t=document.getElementById('cType').value;document.getElementById('movieFields').style.display=t==='movie'?'block':'none';document.getElementById('tvFields').style.display=t==='tvseries'?'block':'none';}
@@ -1676,4 +1777,4 @@ async function saveEdit(){
 }
 </script>
 </body>
-  </html>
+ </html>
