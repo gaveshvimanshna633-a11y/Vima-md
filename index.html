@@ -1091,56 +1091,71 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 
 <!-- WATCH PLAYER MODAL -->
 <div class="watch-modal" id="watchModal">
-  <div class="watch-top">
-    <div class="watch-title-bar">
-      <span class="watch-badge"><i class="fas fa-play"></i> STREAMX PLAYER</span>
-      <span class="watch-movie-title" id="watchMovieTitle">Loading...</span>
+  <!-- Top bar -->
+  <div class="cp-topbar" id="cpTopbar">
+    <button class="cp-back" onclick="closeWatchPlayer()"><i class="fas fa-arrow-left"></i></button>
+    <div class="cp-title" id="watchMovieTitle">StreamX</div>
+    <div class="cp-top-right">
+      <span class="cp-sub-badge" id="cpSubBadge"><i class="fas fa-closed-captioning"></i> <span id="cpSubLabel">SUB</span></span>
     </div>
-    <button class="watch-close-btn" onclick="closeWatchPlayer()"><i class="fas fa-times"></i></button>
   </div>
-  <div class="watch-body">
-    <div class="watch-video-wrap" id="watchVideoWrap">
-      <video id="watchVideo" class="watch-video" controls controlsList="nodownload" playsinline></video>
-      <div class="sub-overlay" id="subOverlay"></div>
-      <div class="watch-spinner" id="watchSpinner">
-        <div class="spinner-ring"></div>
-        <p>LOADING VIDEO...</p>
-      </div>
+
+  <!-- Video area -->
+  <div class="cp-video-wrap" id="cpVideoWrap">
+    <video id="watchVideo" class="cp-video" playsinline preload="metadata"></video>
+    <div class="sub-overlay" id="subOverlay"></div>
+
+    <!-- Tap zones -->
+    <div class="cp-tap-left" id="cpTapLeft"></div>
+    <div class="cp-tap-right" id="cpTapRight"></div>
+    <div class="cp-skip-anim" id="cpSkipAnimL"><i class="fas fa-backward"></i> 10s</div>
+    <div class="cp-skip-anim cp-skip-r" id="cpSkipAnimR">10s <i class="fas fa-forward"></i></div>
+
+    <!-- Spinner -->
+    <div class="cp-spinner" id="cpSpinner"><div class="cp-ring"></div></div>
+
+    <!-- Big play button (center) -->
+    <div class="cp-big-play" id="cpBigPlay" onclick="cpTogglePlay()">
+      <i class="fas fa-play" id="cpBigPlayIcon"></i>
     </div>
-    <!-- Manual subtitle upload guide (shown when CORS fails) -->
-    <div class="manual-sub-wrap" id="manualSubWrap" style="display:none;">
-      <div class="manual-sub-box">
-        <div class="msb-icon"><i class="fas fa-exclamation-triangle"></i></div>
-        <div class="msb-content">
-          <div class="msb-title">Subtitle auto-load blocked (CORS)</div>
-          <div class="msb-steps">
-            <div class="msb-step"><span class="msb-num">1</span> Download the subtitle file below</div>
-            <div class="msb-step"><span class="msb-num">2</span> Click "Load Subtitle File" and select the downloaded file</div>
-            <div class="msb-step"><span class="msb-num">3</span> Enjoy the movie with Sinhala subtitles 🇱🇰</div>
-          </div>
-          <div class="msb-btns">
-            <a id="manualSubDownloadLink" href="#" download class="msb-btn-dl" target="_blank"><i class="fas fa-download"></i> Download Subtitle</a>
-            <label class="msb-btn-upload"><i class="fas fa-folder-open"></i> Load Subtitle File<input type="file" accept=".srt,.vtt,.zip" onchange="manualSubLoad(this)" style="display:none;"></label>
-          </div>
-        </div>
+  </div>
+
+  <!-- Bottom controls -->
+  <div class="cp-controls" id="cpControls">
+    <!-- Progress bar -->
+    <div class="cp-progress-wrap">
+      <span class="cp-time" id="cpCurrent">0:00</span>
+      <div class="cp-seekbar" id="cpSeekbar">
+        <div class="cp-seek-bg"></div>
+        <div class="cp-seek-buf" id="cpSeekBuf"></div>
+        <div class="cp-seek-fill" id="cpSeekFill"></div>
+        <div class="cp-seek-thumb" id="cpSeekThumb"></div>
       </div>
+      <span class="cp-time" id="cpDuration">0:00</span>
     </div>
-    <div class="watch-controls-bar">
-      <div class="watch-sub-status" id="watchSubStatus">
-        <i class="fas fa-closed-captioning"></i>
-        <span id="subStatusText">Subtitles: Loading...</span>
-      </div>
-      <div class="watch-ctrl-btns">
-        <label class="wctrl-btn" title="Load subtitle file manually" style="cursor:pointer;">
-          <i class="fas fa-upload"></i> LOAD SUB
-          <input type="file" accept=".srt,.vtt,.zip" onchange="manualSubLoad(this)" style="display:none;">
-        </label>
-        <button class="wctrl-btn sub-on" onclick="toggleSubtitles()" id="subToggleBtn">
-          <i class="fas fa-closed-captioning"></i> SUB ON
-        </button>
-        <button class="wctrl-btn" onclick="document.getElementById('watchVideo').requestFullscreen()">
-          <i class="fas fa-expand"></i>
-        </button>
+    <!-- Buttons row -->
+    <div class="cp-btn-row">
+      <button class="cp-btn" onclick="cpSkip(-10)"><i class="fas fa-undo"></i><span>10</span></button>
+      <button class="cp-btn cp-play-btn" id="cpPlayBtn" onclick="cpTogglePlay()"><i class="fas fa-play" id="cpPlayIcon"></i></button>
+      <button class="cp-btn" onclick="cpSkip(10)"><i class="fas fa-redo"></i><span>10</span></button>
+      <button class="cp-btn" onclick="cpToggleMute()" id="cpMuteBtn"><i class="fas fa-volume-up" id="cpVolIcon"></i></button>
+      <button class="cp-btn cp-sub-btn" id="cpSubBtn" onclick="cpToggleSub()"><i class="fas fa-closed-captioning"></i></button>
+      <label class="cp-btn cp-load-sub-btn" title="Load subtitle">
+        <i class="fas fa-upload"></i>
+        <input type="file" accept=".srt,.vtt,.zip" onchange="manualSubLoad(this)" style="display:none;">
+      </label>
+      <button class="cp-btn" onclick="cpFullscreen()"><i class="fas fa-expand" id="cpFsIcon"></i></button>
+    </div>
+  </div>
+
+  <!-- CORS fail guide -->
+  <div class="cp-cors-guide" id="manualSubWrap" style="display:none;">
+    <div class="cp-cors-inner">
+      <i class="fas fa-exclamation-triangle" style="color:#f97316;font-size:18px;flex-shrink:0;"></i>
+      <div>
+        <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;color:#f97316;margin-bottom:6px;">Auto subtitle load blocked — CORS</div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px;">1. Download subtitle &nbsp;2. Click upload button above &nbsp;3. Select the file 🇱🇰</div>
+        <a id="manualSubDownloadLink" href="#" download target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(229,9,20,0.15);border:1px solid rgba(229,9,20,0.35);border-radius:7px;padding:6px 12px;color:var(--red);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-decoration:none;"><i class="fas fa-download"></i> Download Subtitle</a>
       </div>
     </div>
   </div>
@@ -1269,49 +1284,52 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 .btn-watch.premium{border-color:rgba(251,191,36,0.5);background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(251,191,36,0.04));}
 .btn-watch.premium i{color:#fbbf24;}
 .btn-watch.premium:hover{border-color:#fbbf24;background:rgba(251,191,36,0.2);}
-/* Watch player modal base */
-.watch-modal{display:none;position:fixed;inset:0;background:#000;z-index:9000;flex-direction:column;}
+/* ===== CUSTOM PLAYER ===== */
+.watch-modal{display:none;position:fixed;inset:0;background:#000;z-index:9000;flex-direction:column;user-select:none;}
 .watch-modal.open{display:flex;}
-.watch-top{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(10,10,10,0.98);border-bottom:1px solid rgba(229,9,20,0.2);flex-shrink:0;height:48px;box-sizing:border-box;}
-.watch-title-bar{display:flex;align-items:center;gap:12px;overflow:hidden;}
-.watch-badge{background:var(--red);color:#fff;font-family:'Bebas Neue',cursive;font-size:11px;letter-spacing:2px;padding:3px 10px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
-.watch-movie-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:rgba(255,255,255,0.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.watch-close-btn{background:rgba(255,255,255,0.08);border:none;color:#fff;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s;}
-.watch-close-btn:hover{background:var(--red);}
-.watch-body{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-.watch-video-wrap{flex:1;position:relative;background:#000;min-height:0;overflow:hidden;}
-.watch-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;}
-.sub-overlay{position:fixed;pointer-events:none;z-index:9100;text-align:center;left:0;right:0;}
-.sub-line{display:inline-block;background:rgba(0,0,0,0.88);color:#fff;font-size:clamp(14px,2.4vw,22px);font-family:'Poppins',sans-serif;font-weight:700;padding:5px 16px;border-radius:6px;line-height:1.55;margin:2px 0;max-width:92vw;word-break:break-word;text-shadow:0 2px 10px rgba(0,0,0,1);}
-@media(max-width:600px){.sub-line{font-size:clamp(13px,4vw,17px);padding:4px 10px;}}
-.watch-spinner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(0,0,0,0.75);}
-.watch-spinner p{font-family:'Rajdhani',sans-serif;font-size:12px;letter-spacing:3px;color:rgba(255,255,255,0.4);}
-.watch-spinner.hide{display:none;}
-.spinner-ring{width:44px;height:44px;border:3px solid rgba(229,9,20,0.2);border-top-color:var(--red);border-radius:50%;animation:spin 0.9s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-.watch-controls-bar{background:rgba(10,10,10,0.97);border-top:1px solid rgba(255,255,255,0.06);padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;flex-wrap:wrap;}
-.watch-sub-status{display:flex;align-items:center;gap:8px;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.4);}
-.watch-sub-status i{color:var(--green);}
-.watch-ctrl-btns{display:flex;gap:6px;flex-wrap:wrap;}
-.wctrl-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);padding:6px 12px;border-radius:6px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;display:inline-flex;align-items:center;gap:5px;transition:all 0.2s;}
-.wctrl-btn:hover{background:var(--red);border-color:var(--red);color:#fff;}
-.wctrl-btn.sub-on{background:rgba(34,197,94,0.15);border-color:var(--green);color:var(--green);}
-/* Manual sub guide */
-.manual-sub-wrap{background:rgba(255,140,0,0.06);border-top:1px solid rgba(255,140,0,0.2);padding:12px 16px;flex-shrink:0;}
-.manual-sub-box{display:flex;gap:12px;align-items:flex-start;}
-.msb-icon{font-size:22px;color:#f97316;flex-shrink:0;padding-top:2px;}
-.msb-content{flex:1;}
-.msb-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;color:#f97316;margin-bottom:6px;}
-.msb-steps{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
-.msb-step{font-family:'Rajdhani',sans-serif;font-size:12px;color:rgba(255,255,255,0.6);display:flex;align-items:center;gap:8px;}
-.msb-num{width:18px;height:18px;border-radius:50%;background:rgba(249,115,22,0.25);color:#f97316;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.msb-btns{display:flex;gap:8px;flex-wrap:wrap;}
-.msb-btn-dl,.msb-btn-upload{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:7px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
-.msb-btn-dl{background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.4);color:#f97316;text-decoration:none;}
-.msb-btn-dl:hover{background:rgba(249,115,22,0.25);}
-.msb-btn-upload{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.4);color:#3b82f6;}
-.msb-btn-upload:hover{background:rgba(59,130,246,0.22);}
-/* Premium gate */
+.cp-topbar{display:flex;align-items:center;gap:12px;padding:12px 14px;background:linear-gradient(to bottom,rgba(0,0,0,0.9),transparent);position:absolute;top:0;left:0;right:0;z-index:10;transition:opacity 0.3s;}
+.cp-topbar.hide{opacity:0;pointer-events:none;}
+.cp-back{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px 8px;line-height:1;}
+.cp-title{flex:1;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cp-sub-badge{font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:1px;padding:3px 9px;border-radius:5px;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:var(--green);white-space:nowrap;flex-shrink:0;}
+.cp-sub-badge.off{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.15);color:rgba(255,255,255,0.35);}
+.cp-sub-badge.loading{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.35);color:#3b82f6;}
+.cp-sub-badge.err{background:rgba(255,68,102,0.15);border-color:rgba(255,68,102,0.35);color:#ff4466;}
+.cp-video-wrap{flex:1;position:relative;background:#000;overflow:hidden;}
+.cp-video{width:100%;height:100%;object-fit:contain;display:block;}
+.cp-tap-left,.cp-tap-right{position:absolute;top:0;bottom:0;width:38%;z-index:5;}
+.cp-tap-left{left:0;}.cp-tap-right{right:0;}
+.cp-skip-anim{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.5);border-radius:50px;padding:10px 18px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;color:#fff;opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:6;left:18px;}
+.cp-skip-anim.cp-skip-r{left:auto;right:18px;}
+.cp-skip-anim.show{opacity:1;}
+.cp-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:7;pointer-events:none;}
+.cp-spinner.hide{display:none;}
+.cp-ring{width:50px;height:50px;border:3px solid rgba(229,9,20,0.2);border-top-color:var(--red);border-radius:50%;animation:spin 0.85s linear infinite;}
+.cp-big-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:66px;height:66px;background:rgba(0,0,0,0.55);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;cursor:pointer;z-index:8;transition:opacity 0.2s;border:2px solid rgba(255,255,255,0.25);}
+.cp-big-play.playing{opacity:0;pointer-events:none;}
+.sub-overlay{position:absolute;bottom:72px;left:0;right:0;text-align:center;pointer-events:none;z-index:9;padding:0 10px;}
+.sub-line{display:inline-block;background:rgba(0,0,0,0.88);color:#fff;font-size:clamp(14px,4vw,20px);font-family:'Poppins',sans-serif;font-weight:700;padding:5px 14px;border-radius:6px;line-height:1.55;margin:2px 0;max-width:100%;word-break:break-word;text-shadow:0 2px 8px rgba(0,0,0,1);}
+.cp-controls{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.95) 0%,rgba(0,0,0,0.4) 70%,transparent 100%);padding:6px 10px 16px;z-index:10;transition:opacity 0.3s;}
+.cp-controls.hide{opacity:0;pointer-events:none;}
+.cp-progress-wrap{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.cp-time{font-family:'Rajdhani',sans-serif;font-size:11px;color:rgba(255,255,255,0.7);letter-spacing:0.5px;white-space:nowrap;min-width:38px;}
+.cp-seekbar{flex:1;height:36px;display:flex;align-items:center;cursor:pointer;position:relative;touch-action:none;}
+.cp-seek-bg{position:absolute;left:0;right:0;height:4px;background:rgba(255,255,255,0.2);border-radius:4px;}
+.cp-seek-buf{position:absolute;left:0;height:4px;background:rgba(255,255,255,0.35);border-radius:4px;width:0;}
+.cp-seek-fill{position:absolute;left:0;height:4px;background:var(--red);border-radius:4px;width:0;}
+.cp-seek-thumb{position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,0.6);}
+.cp-btn-row{display:flex;align-items:center;justify-content:center;gap:4px;}
+.cp-btn{background:none;border:none;color:#fff;font-size:17px;cursor:pointer;padding:8px 10px;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:1px;position:relative;transition:background 0.15s;-webkit-tap-highlight-color:transparent;}
+.cp-btn span{font-family:'Rajdhani',sans-serif;font-size:8px;font-weight:700;position:absolute;bottom:5px;right:5px;color:rgba(255,255,255,0.65);}
+.cp-btn:active{background:rgba(255,255,255,0.12);}
+.cp-play-btn{font-size:20px;background:rgba(229,9,20,0.2);border:1.5px solid rgba(229,9,20,0.5);border-radius:50%;width:46px;height:46px;padding:0;flex-shrink:0;}
+.cp-play-btn:active{background:rgba(229,9,20,0.5);}
+.cp-sub-btn.active{color:var(--green);}
+.cp-sub-btn.err-sub{color:#ff4466;}
+.cp-load-sub-btn{font-size:15px;cursor:pointer;}
+.cp-cors-guide{background:rgba(249,115,22,0.07);border-top:1px solid rgba(249,115,22,0.18);padding:10px 14px;flex-shrink:0;}
+.cp-cors-inner{display:flex;gap:12px;align-items:flex-start;}
+:fullscreen .sub-overlay,:-webkit-full-screen .sub-overlay{bottom:80px;}
 .premium-gate{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9500;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
 .premium-gate.open{display:flex;}
 .pg-box{background:linear-gradient(160deg,#1a1218,#0f0c15);border:1px solid rgba(251,191,36,0.25);border-radius:20px;padding:36px 32px;max-width:380px;width:90%;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.7),0 0 60px rgba(251,191,36,0.05);}
@@ -1323,12 +1341,9 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
 .pg-feat{background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.15);border-radius:9px;padding:10px;font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.6);display:flex;flex-direction:column;align-items:center;gap:6px;}
 .pg-feat i{color:#fbbf24;font-size:18px;}
 .pg-unlock-btn{width:100%;padding:14px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:11px;color:#000;font-family:'Bebas Neue',cursive;font-size:18px;letter-spacing:3px;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.25s;box-shadow:0 8px 24px rgba(245,158,11,0.35);}
-.pg-unlock-btn:hover{transform:scale(1.03);box-shadow:0 12px 32px rgba(245,158,11,0.5);}
+.pg-unlock-btn:hover{transform:scale(1.03);}
 .pg-cancel{background:none;border:none;color:rgba(255,255,255,0.3);font-family:'Rajdhani',sans-serif;font-size:12px;cursor:pointer;letter-spacing:1px;padding:4px;}
-.pg-cancel:hover{color:rgba(255,255,255,0.6);}
-/* Episode watch btn */
 .ep-watch{display:flex;align-items:center;gap:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px 12px;cursor:pointer;transition:all 0.2s;width:100%;margin-bottom:6px;}
-.ep-watch:hover{background:rgba(59,130,246,0.2);border-color:#3b82f6;}
 .ep-watch-icon{width:32px;height:32px;border-radius:7px;background:rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;color:#3b82f6;font-size:13px;flex-shrink:0;}
 .ep-watch-info h5{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;color:#3b82f6;margin:0 0 2px;}
 .ep-watch-info p{font-size:10px;color:rgba(255,255,255,0.35);font-family:'Rajdhani',sans-serif;margin:0;}
@@ -1406,23 +1421,160 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
   function openBuiltinPlayer(videoUrl,srtUrl,title){
     _currentSrtUrl=srtUrl||'';
     document.getElementById('watchMovieTitle').textContent=title||'StreamX';
-    document.getElementById('watchSpinner').classList.remove('hide');
-    setSubStatus('loading','Subtitles: Loading...');
+    document.getElementById('cpSpinner').classList.remove('hide');
+    document.getElementById('cpBigPlay').classList.remove('playing');
+    document.getElementById('cpBigPlayIcon').className='fas fa-play';
+    document.getElementById('cpPlayIcon').className='fas fa-play';
     document.getElementById('subOverlay').innerHTML='';
     document.getElementById('manualSubWrap').style.display='none';
     _subCues=[];_subVisible=true;
-    setSubBtn(true);
-    const overlay=document.getElementById('subOverlay');
-    if(overlay.parentElement!==document.body)document.body.appendChild(overlay);
+    cpSetSubBadge('loading','SUB...');
+    document.getElementById('cpSubBtn').className='cp-btn cp-sub-btn loading-sub';
+
     const video=document.getElementById('watchVideo');
-    video.src=videoUrl;video.load();
-    video.oncanplay=()=>document.getElementById('watchSpinner').classList.add('hide');
+    video.src=videoUrl; video.load();
+
+    video.onwaiting=()=>document.getElementById('cpSpinner').classList.remove('hide');
+    video.oncanplay=()=>{document.getElementById('cpSpinner').classList.add('hide');};
+    video.onplay=()=>{
+      document.getElementById('cpBigPlay').classList.add('playing');
+      document.getElementById('cpPlayIcon').className='fas fa-pause';
+      document.getElementById('cpBigPlayIcon').className='fas fa-pause';
+    };
+    video.onpause=()=>{
+      document.getElementById('cpBigPlay').classList.remove('playing');
+      document.getElementById('cpPlayIcon').className='fas fa-play';
+      document.getElementById('cpBigPlayIcon').className='fas fa-play';
+    };
+    video.ontimeupdate=cpUpdateProgress;
+    video.onprogress=cpUpdateBuffer;
+    video.ondurationchange=cpUpdateProgress;
+    video.onended=()=>{
+      document.getElementById('cpBigPlay').classList.remove('playing');
+      document.getElementById('cpPlayIcon').className='fas fa-play';
+    };
+
     document.getElementById('watchModal').classList.add('open');
     document.body.style.overflow='hidden';
+
     if(srtUrl)loadSubAuto(srtUrl,0);
-    else setSubStatus('off','No subtitles available');
+    else{cpSetSubBadge('off','NO SUB');document.getElementById('cpSubBtn').className='cp-btn cp-sub-btn';}
+
+    cpInitSeekbar();
+    cpInitTapZones();
+    cpShowControls();
+
     if(_rafId)cancelAnimationFrame(_rafId);
     _rafId=requestAnimationFrame(subLoop);
+  }
+
+  // ---- Custom player controls ----
+  let _ctrlTimer=null;
+  function cpShowControls(){
+    document.getElementById('cpTopbar').classList.remove('hide');
+    document.getElementById('cpControls').classList.remove('hide');
+    clearTimeout(_ctrlTimer);
+    const v=document.getElementById('watchVideo');
+    if(!v.paused){
+      _ctrlTimer=setTimeout(()=>{
+        document.getElementById('cpTopbar').classList.add('hide');
+        document.getElementById('cpControls').classList.add('hide');
+      },3500);
+    }
+  }
+
+  window.cpTogglePlay=function(){
+    const v=document.getElementById('watchVideo');
+    if(v.paused){v.play();} else {v.pause();}
+    cpShowControls();
+  };
+  window.cpSkip=function(sec){
+    const v=document.getElementById('watchVideo');
+    v.currentTime=Math.max(0,Math.min(v.duration||0,v.currentTime+sec));
+    const animId=sec<0?'cpSkipAnimL':'cpSkipAnimR';
+    const el=document.getElementById(animId);
+    el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),600);
+    cpShowControls();
+  };
+  window.cpToggleMute=function(){
+    const v=document.getElementById('watchVideo');
+    v.muted=!v.muted;
+    document.getElementById('cpVolIcon').className=v.muted?'fas fa-volume-mute':'fas fa-volume-up';
+    cpShowControls();
+  };
+  window.cpToggleSub=function(){
+    _subVisible=!_subVisible;
+    const btn=document.getElementById('cpSubBtn');
+    btn.className='cp-btn cp-sub-btn'+(_subVisible?' active':'');
+    cpSetSubBadge(_subVisible?'on':'off',_subVisible?'SUB ON':'SUB OFF');
+    if(!_subVisible)document.getElementById('subOverlay').innerHTML='';
+    cpShowControls();
+  };
+  window.cpFullscreen=function(){
+    const wrap=document.getElementById('cpVideoWrap');
+    if(document.fullscreenElement){document.exitFullscreen();}
+    else{wrap.requestFullscreen&&wrap.requestFullscreen();}
+    cpShowControls();
+  };
+
+  function cpUpdateProgress(){
+    const v=document.getElementById('watchVideo');
+    if(!v.duration)return;
+    const pct=(v.currentTime/v.duration)*100;
+    document.getElementById('cpSeekFill').style.width=pct+'%';
+    document.getElementById('cpSeekThumb').style.left=pct+'%';
+    document.getElementById('cpCurrent').textContent=fmtTime(v.currentTime);
+    document.getElementById('cpDuration').textContent=fmtTime(v.duration);
+  }
+  function cpUpdateBuffer(){
+    const v=document.getElementById('watchVideo');
+    if(!v.duration||!v.buffered.length)return;
+    const buf=(v.buffered.end(v.buffered.length-1)/v.duration)*100;
+    document.getElementById('cpSeekBuf').style.width=buf+'%';
+  }
+  function fmtTime(s){
+    if(!s||isNaN(s))return'0:00';
+    const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.floor(s%60);
+    return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`;
+  }
+
+  function cpInitSeekbar(){
+    const bar=document.getElementById('cpSeekbar');
+    const v=document.getElementById('watchVideo');
+    function seek(e){
+      const r=bar.getBoundingClientRect();
+      const x=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+      const pct=Math.max(0,Math.min(1,x/r.width));
+      if(v.duration)v.currentTime=pct*v.duration;
+      cpShowControls();
+    }
+    bar.addEventListener('click',seek);
+    bar.addEventListener('touchstart',seek,{passive:true});
+    bar.addEventListener('touchmove',seek,{passive:true});
+  }
+
+  function cpInitTapZones(){
+    let lastTap=0;
+    const handle=(el,sec)=>{
+      el.addEventListener('click',e=>{
+        const now=Date.now();
+        if(now-lastTap<300){cpSkip(sec);}
+        else{cpShowControls();}
+        lastTap=now;
+        e.stopPropagation();
+      });
+    };
+    handle(document.getElementById('cpTapLeft'),-10);
+    handle(document.getElementById('cpTapRight'),10);
+    // tap middle area to show controls
+    document.getElementById('cpVideoWrap').addEventListener('click',()=>cpShowControls());
+  }
+
+  function cpSetSubBadge(type,label){
+    const b=document.getElementById('cpSubBadge');
+    b.className='cp-sub-badge '+type;
+    document.getElementById('cpSubLabel').textContent=label;
   }
 
   window.closeWatchPlayer=function(){
@@ -1434,74 +1586,17 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     document.getElementById('subOverlay').innerHTML='';
   };
 
-  window.toggleSubtitles=function(){
-    _subVisible=!_subVisible;
-    setSubBtn(_subVisible);
-    if(!_subVisible)document.getElementById('subOverlay').innerHTML='';
-  };
+  window.toggleSubtitles=window.cpToggleSub;
 
-  // Manual SRT/ZIP file upload by user
-  window.manualSubLoad=function(input){
+  window.manualSubLoad=async function(input){
     const file=input.files[0];if(!file)return;
-    const st=document.getElementById('subStatusText');
-    st.textContent='Reading file...';
-    const reader=new FileReader();
-    reader.onload=async(e)=>{
-      try{
-        const buf=e.target.result;
-        const bytes=new Uint8Array(buf);
-        let srtText='';
-        if(bytes[0]===0x50&&bytes[1]===0x4B){
-          st.textContent='Extracting ZIP...';
-          const zip=await JSZip.loadAsync(buf);
-          const f=Object.values(zip.files).find(x=>x.name.toLowerCase().endsWith('.srt')&&!x.dir);
-          if(!f)throw new Error('No SRT in ZIP');
-          srtText=await f.async('string');
-        } else {
-          srtText=new TextDecoder('utf-8').decode(buf);
-        }
-        _subCues=parseSRT(srtText);
-        if(_subCues.length){
-          setSubStatus('ok','✅ Loaded from file ('+_subCues.length+' cues)');
-          document.getElementById('manualSubWrap').style.display='none';
-          _subVisible=true;setSubBtn(true);
-        } else throw new Error('0 cues found');
-      }catch(err){setSubStatus('err','❌ '+err.message);}
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  /* ---- PREMIUM GATE ---- */
-  function showPremiumGate(v,s,t){
-    document.getElementById('premiumGateModal').classList.add('open');
-    document.getElementById('premiumGateModal').dataset.v=v;
-    document.getElementById('premiumGateModal').dataset.s=s||'';
-    document.getElementById('premiumGateModal').dataset.t=t||'';
-  }
-  window.closePremiumGate=function(){document.getElementById('premiumGateModal').classList.remove('open');};
-  // Demo: unlock premium (in real app connect to Firebase auth / payment)
-  window.unlockPremiumDemo=function(){
-    window._isPremiumUser=true;
-    const m=document.getElementById('premiumGateModal');
-    m.classList.remove('open');
-    openWatchPlayer(m.dataset.v,m.dataset.s,m.dataset.t,false);
-  };
-
-  /* ---- SUB LOADING ---- */
-  async function loadSubAuto(url,proxyIdx){
-    const st=document.getElementById('subStatusText');
-    // Try direct first, then proxies
-    const fetchUrl=proxyIdx===0?url:PROXIES[proxyIdx-1](url);
-    const label=proxyIdx===0?'direct':`proxy ${proxyIdx}`;
-    st.textContent=`Fetching subtitle (${label})...`;
+    cpSetSubBadge('loading','Reading...');
     try{
-      const res=await fetch(fetchUrl,{signal:AbortSignal.timeout(8000)});
-      if(!res.ok)throw new Error('HTTP '+res.status);
-      const buf=await res.arrayBuffer();
+      const buf=await file.arrayBuffer();
       const bytes=new Uint8Array(buf);
       let srtText='';
       if(bytes[0]===0x50&&bytes[1]===0x4B){
-        st.textContent='Extracting ZIP...';
+        cpSetSubBadge('loading','Extracting...');
         const zip=await JSZip.loadAsync(buf);
         const f=Object.values(zip.files).find(x=>x.name.toLowerCase().endsWith('.srt')&&!x.dir);
         if(!f)throw new Error('No SRT in ZIP');
@@ -1510,81 +1605,20 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
         srtText=new TextDecoder('utf-8').decode(buf);
       }
       _subCues=parseSRT(srtText);
-      if(!_subCues.length)throw new Error('0 cues parsed');
-      setSubStatus('ok','✅ Subtitle loaded ('+_subCues.length+' lines)');
-      _subVisible=true;setSubBtn(true);
-    }catch(e){
-      // Try next proxy
-      const nextIdx=proxyIdx+1;
-      if(nextIdx<=PROXIES.length){
-        loadSubAuto(url,nextIdx);
-      } else {
-        // All failed — show manual guide
-        setSubStatus('err','⚠️ Auto-load failed (CORS block)');
-        showManualSubGuide(url);
-      }
-    }
-  }
+      if(_subCues.length){
+        cpSetSubBadge('on','SUB ON ('+_subCues.length+')');
+        document.getElementById('cpSubBtn').className='cp-btn cp-sub-btn active';
+        document.getElementById('manualSubWrap').style.display='none';
+        _subVisible=true;
+      } else throw new Error('0 cues');
+    }catch(e){cpSetSubBadge('err','SUB ERR');}
+  };
 
-  function showManualSubGuide(srtUrl){
-    const wrap=document.getElementById('manualSubWrap');
-    wrap.style.display='block';
-    document.getElementById('manualSubDownloadLink').href=srtUrl||'#';
-    document.getElementById('manualSubDownloadLink').style.display=srtUrl?'inline-flex':'none';
-  }
-
-  /* ---- HELPERS ---- */
-  function setSubStatus(type,msg){
-    const ic=document.getElementById('watchSubStatus').querySelector('i');
-    document.getElementById('subStatusText').textContent=msg;
-    ic.style.color=type==='ok'?'var(--green)':type==='err'?'#ff4466':type==='off'?'var(--gray)':'var(--blue)';
-  }
-  function setSubBtn(on){
-    const btn=document.getElementById('subToggleBtn');
-    btn.className='wctrl-btn'+(on?' sub-on':'');
-    btn.innerHTML='<i class="fas fa-closed-captioning"></i> SUB '+(on?'ON':'OFF');
-  }
-
-  function parseSRT(txt){
-    const cues=[],blocks=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split(/\n\n+/);
-    const rx=/(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d{1,2}):(\d{2}):(\d{2})[,.](\d{3})/;
-    const t=(h,m,s,ms)=>+h*3600+ +m*60+ +s+ +ms/1000;
-    blocks.forEach(b=>{
-      const ls=b.trim().split('\n');let i=/^\d+$/.test(ls[0])?1:0;
-      const m=rx.exec(ls[i]);if(!m)return;
-      const text=ls.slice(i+1).join('\n').replace(/<[^>]+>/g,'').trim();
-      if(text)cues.push({s:t(m[1],m[2],m[3],m[4]),e:t(m[5],m[6],m[7],m[8]),text});
-    });
-    return cues;
-  }
-
-  function positionSubOverlay(){
-    const video=document.getElementById('watchVideo');
-    const overlay=document.getElementById('subOverlay');
-    if(!video||!overlay)return;
-    const r=video.getBoundingClientRect();
-
-    // Detect fullscreen
-    const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
-
-    // Native video controls height (browser renders ~48px in normal, ~56px in fullscreen)
-    const ctrlH=isFS?56:48;
-
-    // Subtitle sits just above the controls bar
-    const subBottom=window.innerHeight - r.bottom + ctrlH + 8;
-
-    overlay.style.position='fixed';
-    overlay.style.left=r.left+'px';
-    overlay.style.width=r.width+'px';
-    overlay.style.bottom=subBottom+'px';
-    overlay.style.top='auto';
-    overlay.style.zIndex='2147483647';
-  }
+  function positionSubOverlay(){} // now using absolute positioning inside video wrap
 
   function subLoop(){
     const video=document.getElementById('watchVideo');
     const overlay=document.getElementById('subOverlay');
-    positionSubOverlay();
     if(video&&overlay&&_subVisible&&_subCues.length){
       const ct=video.currentTime;
       const active=_subCues.filter(c=>ct>=c.s&&ct<=c.e);
@@ -1592,7 +1626,6 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     } else if(overlay)overlay.innerHTML='';
     _rafId=requestAnimationFrame(subLoop);
   }
-})();
 </script>
 
 <script>
@@ -2284,4 +2317,4 @@ async function saveEdit(){
 }
 </script>
 </body>
-        </html>
+    </html>
