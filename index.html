@@ -1562,33 +1562,22 @@ body{font-family:'Poppins',sans-serif;background:var(--black);color:var(--light)
     const video=document.getElementById('watchVideo');
     const overlay=document.getElementById('subOverlay');
     if(!video||!overlay)return;
-
-    const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
     const r=video.getBoundingClientRect();
-    const vw=r.width, vh=r.height;
 
-    // Actual rendered video dimensions (letterbox/pillarbox aware)
-    const vAspect=(video.videoWidth&&video.videoHeight)?(video.videoWidth/video.videoHeight):16/9;
-    const eAspect=vw/vh;
-    let rendW,rendH,rendX,rendY;
-    if(eAspect>vAspect){
-      rendH=vh; rendW=vh*vAspect;
-      rendX=r.left+(vw-rendW)/2; rendY=r.top;
-    } else {
-      rendW=vw; rendH=vw/vAspect;
-      rendX=r.left; rendY=r.top+(vh-rendH)/2;
-    }
+    // Detect fullscreen
+    const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
 
-    // In fullscreen browser shows native controls ~56px from bottom
-    const controlsH=isFS?56:0;
-    const margin=Math.max(rendH*0.04,8);
-    const subTop=rendY+rendH-controlsH-margin-48;
+    // Native video controls height (browser renders ~48px in normal, ~56px in fullscreen)
+    const ctrlH=isFS?56:48;
+
+    // Subtitle sits just above the controls bar
+    const subBottom=window.innerHeight - r.bottom + ctrlH + 8;
 
     overlay.style.position='fixed';
-    overlay.style.left=rendX+'px';
-    overlay.style.width=rendW+'px';
-    overlay.style.top=Math.max(subTop,rendY)+'px';
-    overlay.style.bottom='auto';
+    overlay.style.left=r.left+'px';
+    overlay.style.width=r.width+'px';
+    overlay.style.bottom=subBottom+'px';
+    overlay.style.top='auto';
     overlay.style.zIndex='2147483647';
   }
 
@@ -2295,4 +2284,4 @@ async function saveEdit(){
 }
 </script>
 </body>
-  </html>
+        </html>
