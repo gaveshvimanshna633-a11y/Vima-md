@@ -6,133 +6,56 @@
 <title>CINEFLIX</title>
 
 <style>
-body{
-margin:0;
-font-family:Arial,sans-serif;
-background:#0f0f0f;
-color:#fff;
-}
-header{
-background:#e50914;
-padding:15px;
-text-align:center;
-font-size:30px;
-font-weight:bold;
-}
-.search-box{
-padding:20px;
-text-align:center;
-}
-.search-box input{
-width:80%;
-max-width:500px;
-padding:12px;
-border:none;
-border-radius:8px;
-}
-.search-box button{
-padding:12px 20px;
-border:none;
-background:#e50914;
-color:#fff;
-border-radius:8px;
-cursor:pointer;
-}
-.movies{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-gap:15px;
-padding:20px;
-}
-.card{
-background:#1a1a1a;
-border-radius:10px;
-overflow:hidden;
-cursor:pointer;
-transition:.3s;
-}
-.card:hover{
-transform:scale(1.04);
-}
-.card img{
-width:100%;
-height:270px;
-object-fit:cover;
-}
-.card-content{
-padding:10px;
-}
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,.95);
-overflow:auto;
-z-index:999;
-}
-.modal-content{
-max-width:900px;
-margin:30px auto;
-background:#181818;
-padding:20px;
-border-radius:10px;
-}
-.poster{
-width:250px;
-max-width:100%;
-border-radius:10px;
-}
-.download-btn{
-display:block;
-background:#e50914;
-padding:12px;
-margin:10px 0;
-text-align:center;
-text-decoration:none;
-color:#fff;
-border-radius:8px;
-font-weight:bold;
-}
-.close{
-float:right;
-font-size:32px;
-cursor:pointer;
-}
+body{margin:0;font-family:Arial;background:#0f0f0f;color:white;}
+header{background:#e50914;padding:15px;text-align:center;font-size:28px;font-weight:bold;}
+
+.search-box{text-align:center;padding:20px;}
+input{padding:12px;width:70%;border:none;border-radius:8px;}
+button{padding:12px 15px;background:#e50914;border:none;color:white;border-radius:8px;cursor:pointer;}
+
+.movies{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;padding:20px;}
+
+.card{background:#1a1a1a;border-radius:10px;overflow:hidden;cursor:pointer;}
+.card img{width:100%;height:260px;object-fit:cover;}
+.card div{padding:10px;}
 </style>
 </head>
+
 <body>
 
 <header>CINEFLIX</header>
 
 <div class="search-box">
-<input type="text" id="searchInput" placeholder="Search Movies...">
+<input id="searchInput" placeholder="Search movie...">
 <button onclick="searchMovies()">Search</button>
 </div>
 
 <div class="movies" id="movies"></div>
 
-<div class="modal" id="movieModal">
-<div class="modal-content" id="movieInfo"></div>
-</div>
-
 <script>
 
 const API_KEY = "646eae85127d7d99";
 
+// 🔥 IMPORTANT FIX: async + proper function
 async function searchMovies(){
 
 const q = document.getElementById("searchInput").value;
 
-if(!q) return;
+if(!q){
+alert("Type something first!");
+return;
+}
 
-const res = await fetch(
-`https://api-dark-shan-yt.koyeb.app/movie/moviepro-search?q=${encodeURIComponent(q)}&apikey=${API_KEY}`
-);
+const url = `https://api-dark-shan-yt.koyeb.app/movie/moviepro-search?q=${encodeURIComponent(q)}&apikey=${API_KEY}`;
 
+console.log("API URL:", url);
+
+try{
+
+const res = await fetch(url);
 const data = await res.json();
+
+console.log(data);
 
 const container = document.getElementById("movies");
 container.innerHTML = "";
@@ -141,67 +64,27 @@ data.data.forEach(movie=>{
 
 container.innerHTML += `
 <div class="card" onclick="openMovie('${movie.id}')">
-
-<img src="${movie.image}" alt="">
-
-<div class="card-content">
+<img src="${movie.image}">
+<div>
 <h3>${movie.title}</h3>
 <p>⭐ ${movie.rating}</p>
 <p>${movie.country}</p>
 </div>
-
 </div>
 `;
 
 });
 
+}catch(err){
+console.log("ERROR:",err);
+alert("API error / CORS issue");
+}
+
 }
 
 async function openMovie(id){
-
-const res = await fetch(
-`https://api-dark-shan-yt.koyeb.app/movie/moviepro-info?id=${id}&apikey=${API_KEY}`
-);
-
-const json = await res.json();
-const movie = json.data;
-
-document.getElementById("movieInfo").innerHTML = `
-
-<span class="close" onclick="closeModal()">&times;</span>
-
-<img class="poster" src="${movie.image}">
-
-<h1>${movie.title}</h1>
-
-<p><b>Year:</b> ${movie.year || "N/A"}</p>
-<p><b>Country:</b> ${movie.country || "N/A"}</p>
-<p><b>Rating:</b> ${movie.rating}</p>
-<p><b>Duration:</b> ${movie.duration}</p>
-
-<p>${movie.description || ""}</p>
-
-<h2>Downloads</h2>
-
-${movie.download.map(d => `
-<a class="download-btn"
-href="${d.link}"
-target="_blank">
-⬇ Download ${d.quality} (${d.size})
-</a>
-`).join("")}
-
-`;
-
-document.getElementById("movieModal").style.display="block";
-
+alert("Detail API ready (next step we connect)");
 }
-
-function closeModal(){
-document.getElementById("movieModal").style.display="none";
-}
-
-searchMovies("Dude");
 
 </script>
 
