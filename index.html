@@ -6,12 +6,8 @@
     <title>Dark Shan Movies - Free Movie Streaming</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         :root {
             --primary: #e50914;
             --secondary: #b20710;
@@ -21,7 +17,6 @@
             --card-hover: #2a2a2a;
             --text: #ffffff;
             --text-muted: #b3b3b3;
-            --gradient: linear-gradient(135deg, #e50914 0%, #b20710 100%);
         }
 
         body {
@@ -29,10 +24,8 @@
             background: var(--dark);
             color: var(--text);
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        /* Header */
         .header {
             position: fixed;
             top: 0;
@@ -42,12 +35,6 @@
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.05);
             padding: 15px 0;
-            transition: all 0.3s;
-        }
-
-        .header.scrolled {
-            background: rgba(0, 0, 0, 0.98);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         .nav-container {
@@ -63,53 +50,16 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 800;
             color: var(--primary);
             text-decoration: none;
-            letter-spacing: -1px;
-        }
-
-        .logo i {
-            font-size: 2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 30px;
-            list-style: none;
-        }
-
-        .nav-links a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        .nav-links a:hover, .nav-links a.active {
-            color: var(--text);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after, .nav-links a.active::after {
-            width: 100%;
         }
 
         .search-box {
             position: relative;
-            width: 300px;
+            width: 350px;
+            max-width: 100%;
         }
 
         .search-box input {
@@ -121,12 +71,10 @@
             color: var(--text);
             font-size: 0.95rem;
             outline: none;
-            transition: all 0.3s;
         }
 
         .search-box input:focus {
             border-color: var(--primary);
-            background: rgba(255,255,255,0.08);
         }
 
         .search-box button {
@@ -134,91 +82,56 @@
             right: 5px;
             top: 50%;
             transform: translateY(-50%);
-            background: var(--gradient);
+            background: var(--primary);
             border: none;
             color: white;
             width: 35px;
             height: 35px;
             border-radius: 50%;
             cursor: pointer;
-            transition: transform 0.3s;
         }
 
-        .search-box button:hover {
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        /* Hero Section */
         .hero {
-            margin-top: 80px;
+            margin-top: 70px;
             padding: 60px 20px;
             background: linear-gradient(to bottom, rgba(15,15,15,0.8), var(--dark)),
                         url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920') center/cover;
-            min-height: 500px;
+            min-height: 400px;
             display: flex;
             align-items: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(circle at 20% 50%, rgba(229,9,20,0.15) 0%, transparent 50%);
         }
 
         .hero-content {
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
-            position: relative;
-            z-index: 1;
         }
 
         .hero-badge {
             display: inline-block;
-            background: var(--gradient);
+            background: var(--primary);
             padding: 6px 16px;
             border-radius: 20px;
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 20px;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
         }
 
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: 3rem;
             font-weight: 900;
-            margin-bottom: 20px;
-            line-height: 1.1;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 15px;
         }
 
         .hero p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--text-muted);
             max-width: 600px;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
+            margin-bottom: 25px;
         }
 
         .btn {
-            padding: 14px 32px;
+            padding: 12px 28px;
             border-radius: 8px;
             font-size: 1rem;
             font-weight: 600;
@@ -227,32 +140,20 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            transition: all 0.3s;
             text-decoration: none;
+            transition: all 0.3s;
         }
 
         .btn-primary {
-            background: var(--gradient);
+            background: var(--primary);
             color: white;
-            box-shadow: 0 4px 15px rgba(229,9,20,0.4);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(229,9,20,0.6);
+            box-shadow: 0 4px 15px rgba(229,9,20,0.4);
         }
 
-        .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* Main Content */
         .main-content {
             max-width: 1400px;
             margin: 0 auto;
@@ -264,19 +165,19 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .section-title {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .section-title i {
-            color: var(--primary);
-        }
+        .section-title i { color: var(--primary); }
 
         .filter-tabs {
             display: flex;
@@ -300,7 +201,6 @@
             border-color: var(--primary);
         }
 
-        /* Movie Grid */
         .movie-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -313,13 +213,12 @@
             border-radius: 16px;
             overflow: hidden;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
+            transition: all 0.4s;
             border: 1px solid rgba(255,255,255,0.05);
         }
 
         .movie-card:hover {
-            transform: translateY(-10px) scale(1.02);
+            transform: translateY(-10px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             border-color: rgba(229,9,20,0.3);
         }
@@ -348,9 +247,8 @@
             opacity: 0;
             transition: opacity 0.3s;
             display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px;
+            align-items: center;
+            justify-content: center;
         }
 
         .movie-card:hover .movie-overlay {
@@ -358,34 +256,23 @@
         }
 
         .play-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
             width: 60px;
             height: 60px;
-            background: var(--gradient);
+            background: var(--primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-size: 1.5rem;
-            opacity: 0;
-            transition: all 0.3s;
             box-shadow: 0 4px 20px rgba(229,9,20,0.5);
-        }
-
-        .movie-card:hover .play-btn {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
         }
 
         .movie-badge {
             position: absolute;
             top: 10px;
             right: 10px;
-            background: var(--gradient);
+            background: var(--primary);
             padding: 4px 10px;
             border-radius: 6px;
             font-size: 0.75rem;
@@ -394,7 +281,7 @@
         }
 
         .movie-badge.series {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            background: #f59e0b;
         }
 
         .movie-rating {
@@ -434,13 +321,6 @@
             font-size: 0.85rem;
         }
 
-        .movie-meta span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* Loading */
         .loading-container {
             display: flex;
             justify-content: center;
@@ -451,8 +331,8 @@
         }
 
         .loader {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border: 4px solid rgba(229,9,20,0.1);
             border-top-color: var(--primary);
             border-radius: 50%;
@@ -463,12 +343,28 @@
             to { transform: rotate(360deg); }
         }
 
+        .error-box {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .error-box i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .error-box button {
+            margin-top: 20px;
+        }
+
         /* Modal */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             z-index: 2000;
             overflow-y: auto;
             padding: 20px;
@@ -476,7 +372,7 @@
 
         .modal.active {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
         }
 
@@ -485,43 +381,37 @@
             border-radius: 20px;
             max-width: 900px;
             width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
+            margin-top: 20px;
             position: relative;
             border: 1px solid rgba(255,255,255,0.1);
-            animation: modalIn 0.4s ease;
+            animation: modalIn 0.3s ease;
         }
 
         @keyframes modalIn {
-            from { opacity: 0; transform: scale(0.9) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .modal-close {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             width: 40px;
             height: 40px;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             border: none;
             border-radius: 50%;
             color: white;
             font-size: 1.2rem;
             cursor: pointer;
             z-index: 10;
-            transition: all 0.3s;
-        }
-
-        .modal-close:hover {
-            background: var(--primary);
-            transform: rotate(90deg);
         }
 
         .modal-hero {
             position: relative;
-            height: 400px;
+            height: 350px;
             overflow: hidden;
+            border-radius: 20px 20px 0 0;
         }
 
         .modal-hero img {
@@ -539,13 +429,13 @@
 
         .modal-body {
             padding: 30px;
-            margin-top: -100px;
+            margin-top: -80px;
             position: relative;
             z-index: 1;
         }
 
         .modal-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 800;
             margin-bottom: 10px;
         }
@@ -573,15 +463,14 @@
         .modal-description {
             color: var(--text-muted);
             line-height: 1.8;
-            margin-bottom: 30px;
-            font-size: 1.05rem;
+            margin-bottom: 25px;
         }
 
         .genre-tags {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         .genre-tag {
@@ -593,14 +482,8 @@
             color: var(--text-muted);
         }
 
-        .cast-section {
-            margin-bottom: 30px;
-        }
-
-        .cast-section h3 {
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-        }
+        .cast-section { margin-bottom: 25px; }
+        .cast-section h3 { margin-bottom: 15px; font-size: 1.1rem; }
 
         .cast-grid {
             display: flex;
@@ -612,12 +495,12 @@
         .cast-card {
             flex-shrink: 0;
             text-align: center;
-            width: 80px;
+            width: 70px;
         }
 
         .cast-card img {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(255,255,255,0.1);
@@ -625,7 +508,7 @@
         }
 
         .cast-card .name {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
@@ -633,7 +516,7 @@
         }
 
         .cast-card .character {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
         }
 
@@ -683,7 +566,7 @@
         }
 
         .quality-badge {
-            background: var(--gradient);
+            background: var(--primary);
             padding: 6px 14px;
             border-radius: 8px;
             font-weight: 700;
@@ -696,66 +579,25 @@
         }
 
         .download-btn {
-            background: var(--gradient);
+            background: var(--primary);
             color: white;
             border: none;
             padding: 10px 24px;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
         }
 
-        .download-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(229,9,20,0.4);
-        }
-
-        /* Footer */
         .footer {
             background: var(--darker);
             padding: 40px 20px;
             text-align: center;
             border-top: 1px solid rgba(255,255,255,0.05);
-            margin-top: 60px;
         }
 
-        .footer p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
+        .footer p { color: var(--text-muted); font-size: 0.9rem; }
+        .footer a { color: var(--primary); text-decoration: none; }
 
-        .footer a {
-            color: var(--primary);
-            text-decoration: none;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--dark);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .search-box { width: 200px; }
-            .hero h1 { font-size: 2rem; }
-            .movie-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-            .modal-title { font-size: 1.5rem; }
-            .modal-hero { height: 250px; }
-        }
-
-        /* Toast */
         .toast {
             position: fixed;
             bottom: 30px;
@@ -767,47 +609,35 @@
             border-left: 4px solid var(--primary);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             transform: translateX(400px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.4s;
             z-index: 3000;
             display: flex;
             align-items: center;
             gap: 12px;
         }
 
-        .toast.show {
-            transform: translateX(0);
+        .toast.show { transform: translateX(0); }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .movie-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+            .modal-title { font-size: 1.5rem; }
+            .search-box { width: 200px; }
         }
 
-        .no-results {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-muted);
-        }
-
-        .no-results i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: rgba(255,255,255,0.1);
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--dark); }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
-    <header class="header" id="header">
+    <header class="header">
         <div class="nav-container">
             <a href="#" class="logo" onclick="location.reload()">
                 <i class="fas fa-film"></i>
                 <span>DarkShan Movies</span>
             </a>
-            
-            <ul class="nav-links">
-                <li><a href="#" class="active" onclick="showHome()">Home</a></li>
-                <li><a href="#" onclick="filterByType(1)">Movies</a></li>
-                <li><a href="#" onclick="filterByType(2)">TV Series</a></li>
-                <li><a href="#" onclick="showAbout()">About</a></li>
-            </ul>
-
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="Search movies..." onkeyup="handleSearch(event)">
                 <button onclick="searchMovies()"><i class="fas fa-search"></i></button>
@@ -815,24 +645,17 @@
         </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
+    <section class="hero">
         <div class="hero-content">
             <span class="hero-badge"><i class="fas fa-fire"></i> Trending Now</span>
             <h1>Unlimited Movies & TV Shows</h1>
             <p>Watch the latest movies and TV series for free. High quality streaming with multiple download options.</p>
-            <div class="hero-buttons">
-                <button class="btn btn-primary" onclick="scrollToMovies()">
-                    <i class="fas fa-play"></i> Browse Now
-                </button>
-                <button class="btn btn-secondary" onclick="showAbout()">
-                    <i class="fas fa-info-circle"></i> Learn More
-                </button>
-            </div>
+            <button class="btn btn-primary" onclick="scrollToMovies()">
+                <i class="fas fa-play"></i> Browse Now
+            </button>
         </div>
     </section>
 
-    <!-- Main Content -->
     <main class="main-content" id="mainContent">
         <div class="section-header">
             <h2 class="section-title">
@@ -849,90 +672,84 @@
         <div id="moviesContainer">
             <div class="loading-container">
                 <div class="loader"></div>
-                <p>Loading movies...</p>
+                <p>Loading movies from API...</p>
             </div>
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
-        <p>Made with <i class="fas fa-heart" style="color: var(--primary);"></i> by <a href="#">@darkshanyt1</a> | DarkShan Movies 2026</p>
+        <p>Made with <i class="fas fa-heart" style="color: var(--primary);"></i> by <a href="#">@darkshanyt1</a></p>
     </footer>
 
-    <!-- Movie Details Modal -->
     <div class="modal" id="movieModal">
-        <div class="modal-content" id="modalContent">
-            <!-- Content loaded dynamically -->
-        </div>
+        <div class="modal-content" id="modalContent"></div>
     </div>
 
-    <!-- Toast -->
     <div class="toast" id="toast">
         <i class="fas fa-check-circle"></i>
-        <span id="toastMessage">Action completed!</span>
+        <span id="toastMessage">Done!</span>
     </div>
 
     <script>
-        // API Configuration
         const API_KEY = '11d0642e3811dd1b';
         const BASE_URL = 'https://api-dark-shan-yt.koyeb.app/movie';
         
         let allMovies = [];
         let currentFilter = 'all';
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchMovies();
-            
-            // Header scroll effect
-            window.addEventListener('scroll', () => {
-                const header = document.getElementById('header');
-                if (window.scrollY > 50) {
-                    header.classList.add('scrolled');
-                } else {
-                    header.classList.remove('scrolled');
-                }
-            });
-
-            // Close modal on outside click
-            document.getElementById('movieModal').addEventListener('click', (e) => {
-                if (e.target.id === 'movieModal') {
-                    closeModal();
-                }
-            });
-
-            // Close modal on Escape
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeModal();
-            });
-        });
-
-        // Fetch Movies
-        async function fetchMovies() {
+        // Use a CORS proxy to bypass browser restrictions
+        // You can replace this with your own proxy if needed
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+        
+        async function apiCall(endpoint) {
+            const url = `${BASE_URL}${endpoint}&apikey=${API_KEY}`;
+            // Try direct first, then proxy if it fails
             try {
-                const response = await fetch(`${BASE_URL}/moviepro-search?q=avatar&apikey=${API_KEY}`);
-                const data = await response.json();
-                
-                if (data.status && data.data) {
-                    allMovies = data.data;
-                    renderMovies(allMovies);
-                } else {
-                    showError('Failed to load movies');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                // Use demo data if API fails
-                allMovies = getDemoData();
-                renderMovies(allMovies);
-                showToast('Using demo data - API may be unavailable');
+                const response = await fetch(url);
+                if (response.ok) return await response.json();
+                throw new Error('Direct fetch failed');
+            } catch (e) {
+                // Fallback: try with proxy
+                const proxyUrl = CORS_PROXY + encodeURIComponent(url);
+                const response = await fetch(proxyUrl);
+                return await response.json();
             }
         }
 
-        // Search Movies
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchMovies();
+        });
+
+        async function fetchMovies() {
+            const container = document.getElementById('moviesContainer');
+            container.innerHTML = `
+                <div class="loading-container">
+                    <div class="loader"></div>
+                    <p>Connecting to API...</p>
+                </div>
+            `;
+
+            try {
+                const data = await apiCall('/moviepro-search?q=avatar');
+                
+                if (data.status && data.data && data.data.length > 0) {
+                    allMovies = data.data;
+                    renderMovies(allMovies);
+                    showToast(`Loaded ${allMovies.length} movies!`);
+                } else {
+                    showError('No movies found in API response');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                showError('Failed to connect to API. Check console for details.');
+            }
+        }
+
         async function searchMovies() {
             const query = document.getElementById('searchInput').value.trim();
             if (!query) {
                 renderMovies(allMovies);
+                document.getElementById('sectionTitle').textContent = 'Latest Movies';
                 return;
             }
 
@@ -945,56 +762,38 @@
             `;
 
             try {
-                const response = await fetch(`${BASE_URL}/moviepro-search?q=${encodeURIComponent(query)}&apikey=${API_KEY}`);
-                const data = await response.json();
+                const data = await apiCall(`/moviepro-search?q=${encodeURIComponent(query)}`);
                 
                 if (data.status && data.data && data.data.length > 0) {
-                    document.getElementById('sectionTitle').textContent = `Search Results: "${query}"`;
+                    document.getElementById('sectionTitle').textContent = `Results: "${query}"`;
                     renderMovies(data.data);
                 } else {
                     container.innerHTML = `
-                        <div class="no-results">
+                        <div class="error-box">
                             <i class="fas fa-search"></i>
-                            <h3>No movies found</h3>
+                            <h3>No movies found for "${query}"</h3>
                             <p>Try a different search term</p>
                         </div>
                     `;
                 }
             } catch (error) {
-                // Filter local data
-                const filtered = allMovies.filter(m => 
-                    m.title.toLowerCase().includes(query.toLowerCase())
-                );
-                if (filtered.length > 0) {
-                    renderMovies(filtered);
-                } else {
-                    container.innerHTML = `
-                        <div class="no-results">
-                            <i class="fas fa-search"></i>
-                            <h3>No movies found</h3>
-                            <p>Try a different search term</p>
-                        </div>
-                    `;
-                }
+                showError('Search failed. Please try again.');
             }
         }
 
         function handleSearch(e) {
-            if (e.key === 'Enter') {
-                searchMovies();
-            }
+            if (e.key === 'Enter') searchMovies();
         }
 
-        // Filter by Type
         function filterByType(type) {
             currentFilter = type;
             
-            // Update active tab
             document.querySelectorAll('.filter-tab').forEach(tab => {
                 tab.classList.remove('active');
-                if (tab.textContent.toLowerCase().includes(type === 'all' ? 'all' : type === 1 ? 'movie' : 'series')) {
-                    tab.classList.add('active');
-                }
+                const text = tab.textContent.toLowerCase();
+                if (type === 'all' && text === 'all') tab.classList.add('active');
+                else if (type === 1 && text === 'movies') tab.classList.add('active');
+                else if (type === 2 && text === 'series') tab.classList.add('active');
             });
 
             if (type === 'all') {
@@ -1007,15 +806,14 @@
             }
         }
 
-        // Render Movies
         function renderMovies(movies) {
             const container = document.getElementById('moviesContainer');
             
-            if (movies.length === 0) {
+            if (!movies || movies.length === 0) {
                 container.innerHTML = `
-                    <div class="no-results">
+                    <div class="error-box">
                         <i class="fas fa-film"></i>
-                        <h3>No movies found</h3>
+                        <h3>No movies to display</h3>
                     </div>
                 `;
                 return;
@@ -1024,9 +822,14 @@
             container.innerHTML = movies.map(movie => `
                 <div class="movie-card" onclick="showMovieDetails('${movie.id}')">
                     <div class="movie-poster">
-                        <img src="${movie.image}" alt="${movie.title}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x450/1a1a1a/666?text=No+Image'">
-                        <span class="movie-badge ${movie.type === 2 ? 'series' : ''}">${movie.type === 1 ? 'MOVIE' : 'SERIES'}</span>
-                        <span class="movie-rating"><i class="fas fa-star"></i> ${movie.rating || 'N/A'}</span>
+                        <img src="${movie.image}" alt="${movie.title}" loading="lazy" 
+                             onerror="this.src='https://via.placeholder.com/300x450/1a1a1a/666?text=No+Image'">
+                        <span class="movie-badge ${movie.type === 2 ? 'series' : ''}">
+                            ${movie.type === 1 ? 'MOVIE' : 'SERIES'}
+                        </span>
+                        <span class="movie-rating">
+                            <i class="fas fa-star"></i> ${movie.rating || 'N/A'}
+                        </span>
                         <div class="movie-overlay">
                             <div class="play-btn"><i class="fas fa-play"></i></div>
                         </div>
@@ -1042,7 +845,6 @@
             `).join('');
         }
 
-        // Show Movie Details
         async function showMovieDetails(movieId) {
             const modal = document.getElementById('movieModal');
             const content = document.getElementById('modalContent');
@@ -1053,48 +855,35 @@
             content.innerHTML = `
                 <div class="loading-container" style="padding: 60px;">
                     <div class="loader"></div>
-                    <p>Loading details...</p>
+                    <p>Loading movie details...</p>
                 </div>
             `;
 
             try {
-                const response = await fetch(`${BASE_URL}/moviepro-info?id=${movieId}&apikey=${API_KEY}`);
-                const data = await response.json();
+                const data = await apiCall(`/moviepro-info?id=${movieId}`);
                 
                 if (data.status && data.data) {
                     renderModalContent(data.data);
                 } else {
-                    // Find from local data
-                    const movie = allMovies.find(m => m.id === movieId);
-                    if (movie) {
-                        renderModalContent({
-                            ...movie,
-                            description: 'No description available.',
-                            genre: [],
-                            cast: [],
-                            subtitles: [],
-                            download: []
-                        });
-                    }
+                    throw new Error('Invalid response');
                 }
             } catch (error) {
-                const movie = allMovies.find(m => m.id === movieId);
-                if (movie) {
-                    renderModalContent({
-                        ...movie,
-                        description: 'No description available.',
-                        genre: [],
-                        cast: [],
-                        subtitles: [],
-                        download: []
-                    });
-                }
+                content.innerHTML = `
+                    <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+                    <div class="error-box" style="padding: 60px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Failed to load details</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="showMovieDetails('${movieId}')">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
             }
         }
 
         function renderModalContent(movie) {
             const content = document.getElementById('modalContent');
-            
             const duration = movie.duration ? formatDuration(movie.duration) : 'N/A';
             const typeLabel = movie.type === 1 ? 'Movie' : 'TV Series';
             
@@ -1102,7 +891,8 @@
                 <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
                 
                 <div class="modal-hero">
-                    <img src="${movie.image}" alt="${movie.title}" onerror="this.src='https://via.placeholder.com/900x400/1a1a1a/666?text=No+Image'">
+                    <img src="${movie.image}" alt="${movie.title}" 
+                         onerror="this.src='https://via.placeholder.com/900x400/1a1a1a/666?text=No+Image'">
                 </div>
                 
                 <div class="modal-body">
@@ -1128,7 +918,8 @@
                             <div class="cast-grid">
                                 ${movie.cast.map(c => `
                                     <div class="cast-card">
-                                        <img src="${c.url || 'https://via.placeholder.com/80'}" alt="${c.name}" onerror="this.src='https://via.placeholder.com/80/1a1a1a/666?text=?'">
+                                        <img src="${c.url || 'https://via.placeholder.com/80'}" alt="${c.name}"
+                                             onerror="this.src='https://via.placeholder.com/80/1a1a1a/666?text=?'">
                                         <div class="name">${c.name}</div>
                                         <div class="character">${c.character}</div>
                                     </div>
@@ -1142,7 +933,8 @@
                             <h3><i class="fas fa-download"></i> Download Links</h3>
                             <div class="download-links">
                                 ${movie.download.map(d => `
-                                    <a href="${d.link}" target="_blank" class="download-link" onclick="showToast('Starting download...')">
+                                    <a href="${d.link}" target="_blank" class="download-link" 
+                                       onclick="showToast('Opening download: ${d.quality}')">
                                         <div class="download-info">
                                             <span class="quality-badge">${d.quality}</span>
                                             <span class="file-size"><i class="fas fa-file-video"></i> ${d.size}</span>
@@ -1157,7 +949,7 @@
                             <h3><i class="fas fa-download"></i> Download Links</h3>
                             <p style="color: var(--text-muted); text-align: center; padding: 20px;">
                                 <i class="fas fa-exclamation-circle" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
-                                No download links available for this item.
+                                No download links available.
                             </p>
                         </div>
                     `}
@@ -1165,7 +957,7 @@
                     ${movie.subtitles && movie.subtitles.length > 0 ? `
                         <div style="margin-top: 20px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px;">
                             <h3 style="margin-bottom: 15px;"><i class="fas fa-closed-captioning"></i> Subtitles</h3>
-                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="genre-tags">
                                 ${movie.subtitles.map(s => `
                                     <span class="genre-tag"><i class="fas fa-language"></i> ${s.language}</span>
                                 `).join('')}
@@ -1181,15 +973,11 @@
             document.body.style.overflow = '';
         }
 
-        // Utility Functions
         function formatDuration(seconds) {
             if (!seconds || seconds === 0) return 'N/A';
             const hours = Math.floor(seconds / 3600);
             const mins = Math.floor((seconds % 3600) / 60);
-            if (hours > 0) {
-                return `${hours}h ${mins}m`;
-            }
-            return `${mins}m`;
+            return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
         }
 
         function showToast(message) {
@@ -1201,11 +989,12 @@
 
         function showError(message) {
             document.getElementById('moviesContainer').innerHTML = `
-                <div class="no-results">
+                <div class="error-box">
                     <i class="fas fa-exclamation-triangle"></i>
                     <h3>${message}</h3>
-                    <button class="btn btn-primary" onclick="fetchMovies()" style="margin-top: 20px;">
-                        <i class="fas fa-redo"></i> Retry
+                    <p>Make sure you have internet connection and the API is accessible.</p>
+                    <button class="btn btn-primary" onclick="fetchMovies()">
+                        <i class="fas fa-redo"></i> Try Again
                     </button>
                 </div>
             `;
@@ -1215,82 +1004,15 @@
             document.getElementById('mainContent').scrollIntoView({ behavior: 'smooth' });
         }
 
-        function showHome() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('sectionTitle').textContent = 'Latest Movies';
-            renderMovies(allMovies);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        // Close modal on outside click
+        document.getElementById('movieModal').addEventListener('click', (e) => {
+            if (e.target.id === 'movieModal') closeModal();
+        });
 
-        function showAbout() {
-            showToast('DarkShan Movies - Free Movie Streaming Platform');
-        }
-
-        // Demo Data (fallback)
-        function getDemoData() {
-            return [
-                {
-                    id: "1654274595068805784",
-                    title: "Avatar [Hindi]",
-                    type: 1,
-                    date: "2009-12-18",
-                    duration: 9720,
-                    image: "https://pbcdn.aoneroom.com/image/2022/11/21/39501f8b96f106bfd9e69aeb7e04e47e.jpg",
-                    country: "United States",
-                    rating: 7.9
-                },
-                {
-                    id: "2109495361273219144",
-                    title: "Avatar: The Way of Water [Hindi]",
-                    type: 1,
-                    date: "2022-12-16",
-                    duration: 11520,
-                    image: "https://pbcdn.aoneroom.com/image/2024/04/15/4115afc22ed5af48bc9e6fe4c8d1a86a.jpg",
-                    country: "United States",
-                    rating: 7.5
-                },
-                {
-                    id: "74738785354956752",
-                    title: "Avatar: Fire and Ash",
-                    type: 1,
-                    date: "2025-12-19",
-                    duration: 11820,
-                    image: "https://pbcdn.aoneroom.com/image/2026/01/27/830cb82db395dad0eab79d0148041071.jpg",
-                    country: "United States",
-                    rating: 7.4
-                },
-                {
-                    id: "1489180587696031424",
-                    title: "Avatar: The Last Airbender [Hindi]",
-                    type: 2,
-                    date: "2024-02-22",
-                    duration: 0,
-                    image: "https://pbcdn.aoneroom.com/image/2024/04/15/20cb0c00203508c862e64f7d9ab88ca8.jpg",
-                    country: "United States",
-                    rating: 7.2
-                },
-                {
-                    id: "7356905451185128272",
-                    title: "Mortal Kombat II",
-                    type: 1,
-                    date: "2026-05-08",
-                    duration: 6960,
-                    image: "https://pbcdn.aoneroom.com/image/2026/06/03/be83c3c275a22aea4402078eb37b4de5.jpg",
-                    country: "United States",
-                    rating: 6.7
-                },
-                {
-                    id: "3706950846677147032",
-                    title: "Jana Nayagan [Hindi]",
-                    type: 1,
-                    date: "2026-01-09",
-                    duration: 11160,
-                    image: "https://pbcdn.aoneroom.com/image/2026/01/09/8bc6011f1aef7e2a6adced892fb09a0f.jpg",
-                    country: "India",
-                    rating: 7.1
-                }
-            ];
-        }
+        // Close modal on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
     </script>
 </body>
-  </html>
+</html>
