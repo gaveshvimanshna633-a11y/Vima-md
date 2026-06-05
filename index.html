@@ -10,11 +10,8 @@
         
         :root {
             --primary: #e50914;
-            --secondary: #b20710;
             --dark: #0f0f0f;
-            --darker: #000000;
             --card: #1a1a1a;
-            --card-hover: #2a2a2a;
             --text: #ffffff;
             --text-muted: #b3b3b3;
         }
@@ -44,6 +41,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .logo {
@@ -73,9 +72,7 @@
             outline: none;
         }
 
-        .search-box input:focus {
-            border-color: var(--primary);
-        }
+        .search-box input:focus { border-color: var(--primary); }
 
         .search-box button {
             position: absolute;
@@ -236,9 +233,7 @@
             transition: transform 0.5s;
         }
 
-        .movie-card:hover .movie-poster img {
-            transform: scale(1.1);
-        }
+        .movie-card:hover .movie-poster img { transform: scale(1.1); }
 
         .movie-overlay {
             position: absolute;
@@ -251,9 +246,7 @@
             justify-content: center;
         }
 
-        .movie-card:hover .movie-overlay {
-            opacity: 1;
-        }
+        .movie-card:hover .movie-overlay { opacity: 1; }
 
         .play-btn {
             width: 60px;
@@ -280,9 +273,7 @@
             z-index: 2;
         }
 
-        .movie-badge.series {
-            background: #f59e0b;
-        }
+        .movie-badge.series { background: #f59e0b; }
 
         .movie-rating {
             position: absolute;
@@ -300,9 +291,7 @@
             z-index: 2;
         }
 
-        .movie-info {
-            padding: 15px;
-        }
+        .movie-info { padding: 15px; }
 
         .movie-title {
             font-size: 1rem;
@@ -339,9 +328,7 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .error-box {
             text-align: center;
@@ -355,9 +342,21 @@
             margin-bottom: 15px;
         }
 
-        .error-box button {
-            margin-top: 20px;
+        .api-status {
+            background: rgba(229,9,20,0.1);
+            border: 1px solid rgba(229,9,20,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
         }
+
+        .api-status.success {
+            background: rgba(34,197,94,0.1);
+            border-color: rgba(34,197,94,0.3);
+        }
+
+        .api-status i { font-size: 2rem; margin-bottom: 10px; display: block; }
 
         /* Modal */
         .modal {
@@ -589,7 +588,7 @@
         }
 
         .footer {
-            background: var(--darker);
+            background: #000;
             padding: 40px 20px;
             text-align: center;
             border-top: 1px solid rgba(255,255,255,0.05);
@@ -622,7 +621,7 @@
             .hero h1 { font-size: 2rem; }
             .movie-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
             .modal-title { font-size: 1.5rem; }
-            .search-box { width: 200px; }
+            .search-box { width: 100%; }
         }
 
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -657,6 +656,11 @@
     </section>
 
     <main class="main-content" id="mainContent">
+        <div id="apiStatus" class="api-status">
+            <i class="fas fa-circle-notch fa-spin" style="color: var(--primary);"></i>
+            <p>Connecting to API...</p>
+        </div>
+
         <div class="section-header">
             <h2 class="section-title">
                 <i class="fas fa-compact-disc"></i>
@@ -697,22 +701,69 @@
         let allMovies = [];
         let currentFilter = 'all';
 
-        // Use a CORS proxy to bypass browser restrictions
-        // You can replace this with your own proxy if needed
-        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-        
-        async function apiCall(endpoint) {
-            const url = `${BASE_URL}${endpoint}&apikey=${API_KEY}`;
-            // Try direct first, then proxy if it fails
+        // CORS Proxy list - will try each one
+        const PROXY_LIST = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ];
+
+        async function fetchWithProxy(url) {
+            // Try direct first
             try {
-                const response = await fetch(url);
-                if (response.ok) return await response.json();
-                throw new Error('Direct fetch failed');
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                if (response.ok) {
+                    const text = await response.text();
+                    try {
+                        return JSON.parse(text);
+                    } catch (e) {
+                        return { text: text };
+                    }
+                }
             } catch (e) {
-                // Fallback: try with proxy
-                const proxyUrl = CORS_PROXY + encodeURIComponent(url);
-                const response = await fetch(proxyUrl);
-                return await response.json();
+                console.log('Direct fetch failed:', e.message);
+            }
+
+            // Try each proxy
+            for (const proxy of PROXY_LIST) {
+                try {
+                    const proxyUrl = proxy + encodeURIComponent(url);
+                    const response = await fetch(proxyUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        }
+                    });
+                    if (response.ok) {
+                        const text = await response.text();
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            return { text: text };
+                        }
+                    }
+                } catch (e) {
+                    console.log(`Proxy ${proxy} failed:`, e.message);
+                    continue;
+                }
+            }
+
+            throw new Error('All connection methods failed');
+        }
+
+        function updateApiStatus(status, message) {
+            const statusEl = document.getElementById('apiStatus');
+            if (status === 'success') {
+                statusEl.className = 'api-status success';
+                statusEl.innerHTML = `<i class="fas fa-check-circle" style="color: #22c55e;"></i><p>${message}</p>`;
+                setTimeout(() => statusEl.style.display = 'none', 3000);
+            } else if (status === 'error') {
+                statusEl.innerHTML = `<i class="fas fa-exclamation-triangle" style="color: var(--primary);"></i><p>${message}</p>`;
             }
         }
 
@@ -730,18 +781,56 @@
             `;
 
             try {
-                const data = await apiCall('/moviepro-search?q=avatar');
+                const url = `${BASE_URL}/moviepro-search?q=avatar&apikey=${API_KEY}`;
+                const data = await fetchWithProxy(url);
                 
                 if (data.status && data.data && data.data.length > 0) {
                     allMovies = data.data;
                     renderMovies(allMovies);
-                    showToast(`Loaded ${allMovies.length} movies!`);
+                    updateApiStatus('success', `Connected! Loaded ${allMovies.length} movies`);
                 } else {
-                    showError('No movies found in API response');
+                    throw new Error('Invalid API response');
                 }
             } catch (error) {
                 console.error('API Error:', error);
-                showError('Failed to connect to API. Check console for details.');
+                updateApiStatus('error', `API Error: ${error.message}. Retrying...`);
+                
+                // Retry once after 2 seconds
+                setTimeout(() => {
+                    retryFetch();
+                }, 2000);
+            }
+        }
+
+        async function retryFetch() {
+            try {
+                const url = `${BASE_URL}/moviepro-search?q=avatar&apikey=${API_KEY}`;
+                const data = await fetchWithProxy(url);
+                
+                if (data.status && data.data && data.data.length > 0) {
+                    allMovies = data.data;
+                    renderMovies(allMovies);
+                    updateApiStatus('success', `Connected! Loaded ${allMovies.length} movies`);
+                } else {
+                    throw new Error('Invalid response');
+                }
+            } catch (error) {
+                document.getElementById('moviesContainer').innerHTML = `
+                    <div class="error-box">
+                        <i class="fas fa-wifi"></i>
+                        <h3>Connection Failed</h3>
+                        <p>Could not connect to the movie API. This might be due to:</p>
+                        <ul style="text-align: left; max-width: 400px; margin: 15px auto; color: var(--text-muted);">
+                            <li>CORS restrictions in your browser</li>
+                            <li>API server is temporarily down</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        <button class="btn btn-primary" onclick="fetchMovies()" style="margin-top: 15px;">
+                            <i class="fas fa-redo"></i> Try Again
+                        </button>
+                    </div>
+                `;
+                updateApiStatus('error', 'Connection failed. Click Try Again.');
             }
         }
 
@@ -762,7 +851,8 @@
             `;
 
             try {
-                const data = await apiCall(`/moviepro-search?q=${encodeURIComponent(query)}`);
+                const url = `${BASE_URL}/moviepro-search?q=${encodeURIComponent(query)}&apikey=${API_KEY}`;
+                const data = await fetchWithProxy(url);
                 
                 if (data.status && data.data && data.data.length > 0) {
                     document.getElementById('sectionTitle').textContent = `Results: "${query}"`;
@@ -777,7 +867,7 @@
                     `;
                 }
             } catch (error) {
-                showError('Search failed. Please try again.');
+                showToast('Search failed. Please try again.');
             }
         }
 
@@ -860,7 +950,8 @@
             `;
 
             try {
-                const data = await apiCall(`/moviepro-info?id=${movieId}`);
+                const url = `${BASE_URL}/moviepro-info?id=${movieId}&apikey=${API_KEY}`;
+                const data = await fetchWithProxy(url);
                 
                 if (data.status && data.data) {
                     renderModalContent(data.data);
@@ -987,29 +1078,14 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        function showError(message) {
-            document.getElementById('moviesContainer').innerHTML = `
-                <div class="error-box">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>${message}</h3>
-                    <p>Make sure you have internet connection and the API is accessible.</p>
-                    <button class="btn btn-primary" onclick="fetchMovies()">
-                        <i class="fas fa-redo"></i> Try Again
-                    </button>
-                </div>
-            `;
-        }
-
         function scrollToMovies() {
             document.getElementById('mainContent').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Close modal on outside click
         document.getElementById('movieModal').addEventListener('click', (e) => {
             if (e.target.id === 'movieModal') closeModal();
         });
 
-        // Close modal on Escape
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeModal();
         });
