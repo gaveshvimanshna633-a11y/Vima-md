@@ -1,0 +1,45 @@
+:root {
+  --ink: #0a0908;
+  --charcoal: #17130f;
+  --crimson: #c81e3a;
+  --ember: #ff5a3c;
+  --parchment: #f2ece2;
+  --smoke: rgba(242, 236, 226, 0.62);
+  --red-active: #e50914;
+  --red-active-bright: #ff1e2d;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--ink);
+  color: var(--parchment);
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+button {
+  font-family: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
